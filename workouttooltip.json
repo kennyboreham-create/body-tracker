@@ -1,0 +1,18 @@
+{
+  "Descriptons": {
+    "title": "Day A: Lower Body & Upper Push Focus",
+    "exercises": [
+      { "id": "a1", "name": "Goblet Squat", "sets": "4 Sets × 6-8 Reps", "estBurn": 180 },
+      { "id": "a2", "name": "Decline Push-Ups", "How To": "Put your feet on an elevated surface (couch, step, or chair) and perform push-ups with your hands on the floor. To add weight, place a dumbbell or weight plate securely on your upper back or use a resistance band around your shoulders." },
+      { "id": "a3", "name": "Rows with circle band", "How To": "Put circle band under foot and kneel on 1 knee. Pull the circle band to your pocket.  Both sides." },
+      { "id": "a4", "name": "Squat Side Step", "How To": "https://www.google.com/search?q=leg+exercise+with+circle+band+side+step&sca_esv=8b590ccd188bc65d&rlz=1C1CHBF_enCA900CA900&sxsrf=APpeQnvi1tPsO2kN5rFc5TAiJMHfsBeV0g%3A1790185167234&ei=zw60atHoDeW0mLQP0eD7iAI&biw=1360&bih=641&oq=leg+excercise+with+circle+band+side+&gs_lp=Egxnd3Mtd2l6LXNlcnAiJGxlZyBleGNlcmNpc2Ugd2l0aCBjaXJjbGUgYmFuZCBzaWRlICoHCAAYChigATIHECEYChigATIHECEYChigATIHECEYChigATIHECEYChigATIFECEYnwVI-zxQqAdYkx1wAXgAkAEAmAGgAaAB_wWqAQMwLja4AQHIAQD4AQGYAgegAsgGwgIOEAAYgAQYigUYhgMYsAPCAgsQABiABBiiBBiwA8ICCBAAGO8FGLADwgIGECEYFRgKwgIEECEYCpgDAOIDBRIBMSBAiAYBkAYHkgcDMS42oAfbMbIHAzAuNrgHvgbCBwcwLjEuNC4yyAcugAgB&sclient=gws-wiz-serp#fpstate=ive&vld=cid:a1eebdaa,vid:X0jsl2ZrXug,st:0"},
+      { "id": "a5", "name": "Pallof Press", "How To": "https://www.google.com/search?q=Pallof+Press&rlz=1C1CHBF_enCA900CA900&oq=Pallof+Press&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIMCAEQABhDGIAEGIoFMgwIAhAAGEMYgAQYigUyDAgDEAAYQxiABBiKBTISCAQQABhDGIMBGLEDGIAEGIoFMgwIBRAAGEMYgAQYigUyDAgGEAAYQxiABBiKBTIMCAcQABhDGIAEGIoFMgwICBAAGEMYgAQYigUyDAgJEAAYQxiABBiKBdIBCDEwNTRqMGo5qAIGsAIB8QUcMdUM8ZnbbA&sourceid=chrome&source=chrome.ob&ie=UTF-8#fpstate=ive&vld=cid:82b3dc26,vid:_vTSTvW_F3o,st:0"},
+      {"id":"a6", "name": "Lunges"},
+      {"id":"a7", "name": "Situps"},
+      {"id":"a8", "name": "Crunches"},
+      {"id": "a9", "name": "Calf Jumps"}
+    ]
+  }
+ 
+
+}

@@ -1,0 +1,22 @@
+﻿# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Local helpers / backups (not for Pages)
+Open App.bat
+*.bak*
+*.bak
+
+# Editor / env
+.env
+.env.*
+*.swp
+*~
+.vscode/
+.idea/
+
+# Build temp
+scripts/_make_index.py
+body.html.source

@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>240lb Recomp & Athletic Performance Tracker</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <!-- sql.js for loading data/app.db on GitHub Pages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    .modal-backdrop {
+      background-color: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col overflow-x-hidden bg-slate-900 text-slate-100">
+
+  <header class="border-b border-slate-800 bg-slate-950/80 sticky top-0 z-30 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-600/30">
+          <i data-lucide="dumbbell" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight text-white">240lb Recomp Portal</h1>
+          <p class="text-xs text-slate-400">Fat Loss • Muscle Building • Hockey Performance</p>
+        </div>
+      </div>
+      
+      <!-- Database Status Badge -->
+      <div class="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 text-xs text-slate-300">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span id="appDataStatus">Loading data...</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/60">
+      <nav class="flex space-x-2 sm:space-x-8 overflow-x-auto py-2 text-sm font-medium" id="tabNav">
+        <button onclick="switchTab('overall')" id="tab-overall" class="tab-btn py-2 px-3 rounded-lg text-indigo-400 bg-indigo-950/50 border border-indigo-800/50 flex items-center space-x-2 transition-all">
+          <i data-lucide="compass" class="w-4 h-4"></i>
+          <span>Overall Plan</span>
+        </button>
+        <button onclick="switchTab('diet')" id="tab-diet" class="tab-btn py-2 px-3 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 flex items-center space-x-2 transition-all">
+          <i data-lucide="utensils" class="w-4 h-4"></i>
+          <span>Diet & Daily Tracker</span>
+        </button>
+        <button onclick="switchTab('workout')" id="tab-workout" class="tab-btn py-2 px-3 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 flex items-center space-x-2 transition-all">
+          <i data-lucide="activity" class="w-4 h-4"></i>
+          <span>Workout & Cardio</span>
+        </button>
+        <button onclick="switchTab('schedule')" id="tab-schedule" class="tab-btn py-2 px-3 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 flex items-center space-x-2 transition-all">
+          <i data-lucide="calendar" class="w-4 h-4"></i>
+          <span>Weekly Schedule</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- TAB 1: OVERALL PLAN -->
+    <div id="content-overall" class="tab-content space-y-6">
+      
+      <!-- Banner -->
+      <div class="bg-gradient-to-r from-indigo-900/40 via-slate-900 to-slate-900 border border-indigo-800/40 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div class="max-w-3xl">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider">Body Recomposition Strategy</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3">240lb Fat Loss & Strength Protocol</h2>
+          <p class="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed">
+            Designed to drop body fat while retaining and building lean muscle mass. Formulated specifically to sustain heavy lower-body drive and cardiovascular endurance for Thursday night hockey.
+          </p>
+        </div>
+      </div>
+
+      <!-- Core Metrics Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 text-center">
+          <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Daily Target Calories</p>
+          <p class="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1">2,200 - 2,400</p>
+          <p class="text-xs text-slate-400 mt-1">500-700 kcal Deficit</p>
+        </div>
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 text-center">
+          <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Daily Protein</p>
+          <p class="text-2xl sm:text-3xl font-extrabold text-indigo-400 mt-1">180 - 200g</p>
+          <p class="text-xs text-slate-400 mt-1">0.8 - 0.9g per lb Target</p>
+        </div>
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 text-center">
+          <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Daily Carbohydrates</p>
+          <p class="text-2xl sm:text-3xl font-extrabold text-amber-400 mt-1">180 - 220g</p>
+          <p class="text-xs text-slate-400 mt-1">On-Ice Glycogen & Fuel</p>
+        </div>
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 text-center">
+          <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Healthy Fats</p>
+          <p class="text-2xl sm:text-3xl font-extrabold text-sky-400 mt-1">65 - 75g</p>
+          <p class="text-xs text-slate-400 mt-1">Hormones & Joint Health</p>
+        </div>
+      </div>
+
+      <!-- Principles Cards -->
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 hover:border-slate-600 transition-all">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
+            <i data-lucide="zap" class="w-5 h-5"></i>
+          </div>
+          <h3 class="font-bold text-slate-100 text-lg">1. Caloric Deficit with High Protein</h3>
+          <p class="text-slate-300 text-sm mt-2 leading-relaxed">
+            Fat loss requires burning more calories than you consume. Keeping protein consistently around 180–200g ensures body fat loss rather than muscle degradation.
+          </p>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 hover:border-slate-600 transition-all">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mb-4">
+            <i data-lucide="shield" class="w-5 h-5"></i>
+          </div>
+          <h3 class="font-bold text-slate-100 text-lg">2. 3-Day Compound Lifting</h3>
+          <p class="text-slate-300 text-sm mt-2 leading-relaxed">
+            Full-body compound movements trigger maximum muscle protein synthesis without overtaxing your central nervous system before game day.
+          </p>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 hover:border-slate-600 transition-all">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4">
+            <i data-lucide="flame" class="w-5 h-5"></i>
+          </div>
+          <h3 class="font-bold text-slate-100 text-lg">3. Hockey & Energy Management</h3>
+          <p class="text-slate-300 text-sm mt-2 leading-relaxed">
+            Thursday night hockey serves as an intense anaerobic workout. Carbs are elevated slightly on Thursday afternoon to maximize muscle glycogen for peak performance.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: DIET & DAILY TRACKER -->
+    <div id="content-diet" class="tab-content space-y-6 hidden">
+      
+      <!-- Action Buttons Modal Triggers -->
+      <div class="flex flex-wrap gap-4 items-center justify-between bg-slate-800/50 border border-slate-700/60 p-4 rounded-2xl">
+        <div class="flex items-center space-x-2 text-slate-300 text-sm font-medium">
+          <i data-lucide="book-open" class="w-5 h-5 text-indigo-400"></i>
+          <span>Nutrition Resources & Ideas:</span>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button onclick="openModal('mealIdeasModal')" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm flex items-center space-x-2 shadow-md shadow-indigo-600/20 transition-all">
+            <i data-lucide="utensils" class="w-4 h-4"></i>
+            <span>Meal Ideas (5 Daily Plans)</span>
+          </button>
+          <button onclick="openModal('proteinIdeasModal')" class="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-100 font-medium text-sm flex items-center space-x-2 border border-slate-600 transition-all">
+            <i data-lucide="list" class="w-4 h-4"></i>
+            <span>Protein Ideas (20 Sources)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Calorie Counter Header Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-indigo-950/50 to-slate-900 border border-indigo-800/60 p-5 rounded-2xl shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <i data-lucide="flame" class="w-5 h-5 text-amber-400"></i>
+            <h3 class="font-bold text-lg text-white">Daily Diet Draft Tracker</h3>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Auto-saves to local draft storage as you select foods and portions.</p>
+        </div>
+        
+        <!-- Live Estimated Calorie Gauge -->
+        <div class="bg-slate-900/90 border border-slate-700 px-5 py-3 rounded-xl flex items-center space-x-4">
+          <div>
+            <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Estimated Total Intake</p>
+            <div class="flex items-baseline space-x-1">
+              <span id="liveCalorieDisplay" class="text-2xl font-extrabold text-amber-400">0</span>
+              <span class="text-xs font-semibold text-slate-400">/ 2,300 kcal</span>
+            </div>
+          </div>
+          <div class="h-8 w-px bg-slate-800"></div>
+          <div>
+            <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Est. Protein</p>
+            <span id="liveProteinDisplay" class="text-lg font-bold text-indigo-400">0g</span>
+          </div>
+          <button onclick="resetDietForm()" class="ml-2 p-2 hover:bg-slate-800 text-rose-400 rounded-lg transition-all" title="Clear Draft">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Diet Meal Sections Form -->
+      <form id="dietForm" onsubmit="handleDietSubmit(event)" class="space-y-6">
+        
+        <!-- Morning Section -->
+        <div class="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-5 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-700/60 pb-3 gap-2">
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+              <h4 class="font-bold text-slate-100 text-base">Morning Meal</h4>
+            </div>
+            
+            <!-- Quick Add Macro Buttons -->
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs text-slate-400 mr-1">Add Macro Food:</span>
+              <button type="button" onclick="openFoodCategoryModal('proteins', 'morning')" class="px-2.5 py-1 bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all">
+                <i data-lucide="plus" class="w-3 h-3"></i><span>Protein</span>
+              </button>
+              <button type="button" onclick="openFoodCategoryModal('carbs', 'morning')" class="px-2.5 py-1 bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-700/60 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all">
+                <i data-lucide="plus" class="w-3 h-3"></i><span>Carbs</span>
+              </button>
+              <button type="button" onclick="openFoodCategoryModal('fats', 'morning')" class="px-2.5 py-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 border border-sky-700/60 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all">
+                <i data-lucide="plus" class="w-3 h-3"></i><span>Fats</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Food Selector Container -->
+          <div id="morning_foods_container" class="space-y-4">
+            <!-- Dynamically populated from active selections -->
+          </div>
+
+          <!-- Other Custom Food Input -->
+          <div class="pt-2 border-t border-slate-700/40 grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+            <div class="md:col-span-6">
+              <label class="block text-xs font-medium text-slate-400 mb-1">Other / Custom Food:</label>
+              <input type="text" id="morning_other_name" placeholder="e.g. Protein Bar, Greek Salad" oninput="autoSaveDietDraft()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="md:col-span-3">
+              <label class="block text-xs font-medium text-slate-400 mb-1">Calories:</label>
+              <input type="number" id="morning_other_cals" placeholder="200" oninput="autoSaveDietDraft()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="md:col-span-3">
+              <label class="block text-xs font-medium text-slate-400 mb-1">Protein (g):</label>
+              <input type="number" id="morning_other_prot" placeholder="15" oninput="autoSaveDietDraft()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- Afternoon Section -->
+        <div class="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-5 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-700/60 pb-3 gap-2">
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-sky-400"></span>
+              <h4 class="font-bold text-slate-100 text-base">Afternoon Meal</h4>
+            </div>
+
+            <!-- Quick Add Macro Buttons -->
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs text-slate-400 mr-1">Add Macro Food:</span>
+              <button type="button" onclick="openFoodCategoryModal('proteins', 'afternoon')" class="px-2.5 py-1 bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all">
+                <i data-lucide="plus" class="w-3 h-3"></i><span>Protein</span>
+              </button>
+              <button type="button" onclick="openFoodCategoryModal('carbs', 'afternoon')" class="px-2.5 py-1 bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-700/60 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all">
+                <i data-lucide="plus" class="w-3 h-3"></i><span>Carbs</span>
+              </button>
+              <button type="button" onclick="openFoodCategoryModal('fats', 'afternoon')" class="px-2.5 py-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 border border-sky-700/60 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all">
+                <i data-lucide="plus" class="w-3 h-3"></i><span>Fats</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Food Selector Container -->
+          <div id="afternoon_foods_container" class="space-y-4">
+            <!-- Dynamically populated from active selections -->
+          </div>
+
+          <!-- Other Custom Food Input -->
+          <div class="pt-2 border-t border-slate-700/40 grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+            <div class="md:col-span-6">
+              <label class="block text-xs font-medium text-slate-400 mb-1">Other / Custom Food:</label>
+              <input type="text" id="afternoon_other_name" placeholder="e.g. Rice Cake with Peanut Butter" oninput="autoSaveDietDraft()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="md:col-span-3">
+              <label class="block text-xs font-medium text-slate-400 mb-1">Calories:</label>
+              <input type="number" id="afternoon_other_cals" placeholder="180" oninput="autoSaveDietDraft()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="md:col-span-3">
+              <label class="block text-xs font-medium text-slate-400 mb-1">Protein (g):</label>
+              <input type="number" id="afternoon_other_prot" placeholder="5" oninput="autoSaveDietDraft()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- Night Section -->
+        <div class="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-5 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-700/60 pb-3 gap-2">
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-purple-400"></span>
+              <h4 class="font-bold text-slate-100 text-base">Night / Pre-Bed Snack</h4>
+            </div>
+
+            <!-- Quick Add Macro Buttons -->
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs text-slate-400 mr-1">Add Macro Food:</span>
+              <button type="button" onclick="openFoodCategoryModal('proteins', 'night')" class="px-2.5 py-1 bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all">
+                <i data-lucide="plus" class="w-3 h-3"></i><span>Protein</span>
+              </button>
+              <button type="button" onclick="openFoodCategoryModal('carbs', 'night')" class="px-2.5 py-1 bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-700/60 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all">
+                <i data-lucide="plus" class="w-3 h-3"></i><span>Carbs</span>
+              </button>
+              <button type="button" onclick="openFoodCategoryModal('fats', 'night')" class="px-2.5 py-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 border border-sky-700/60 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all">
+                <i data-lucide="plus" class="w-3 h-3"></i><span>Fats</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Food Selector Container -->
+          <div id="night_foods_container" class="space-y-4">
+            <!-- Dynamically populated from active selections -->
+          </div>
+
+          <!-- Other Custom Food Input -->
+          <div class="pt-2 border-t border-slate-700/40 grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+            <div class="md:col-span-6">
+              <label class="block text-xs font-medium text-slate-400 mb-1">Other / Custom Food:</label>
+              <input type="text" id="night_other_name" placeholder="e.g. Casein Pudding, Handful of Walnuts" oninput="autoSaveDietDraft()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="md:col-span-3">
+              <label class="block text-xs font-medium text-slate-400 mb-1">Calories:</label>
+              <input type="number" id="night_other_cals" placeholder="150" oninput="autoSaveDietDraft()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="md:col-span-3">
+              <label class="block text-xs font-medium text-slate-400 mb-1">Protein (g):</label>
+              <input type="number" id="night_other_prot" placeholder="20" oninput="autoSaveDietDraft()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- Diet Notes & Submit Button -->
+        <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <input type="text" id="diet_notes" placeholder="General notes for today's diet (e.g. Played hockey, drank 4L water)..." oninput="autoSaveDietDraft()" class="w-full sm:flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-white">
+          <button type="submit" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold text-white shadow-lg shadow-emerald-600/20 flex items-center justify-center space-x-2 transition-all">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+            <span>Submit Daily Diet Log</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Calendar Section -->
+      <div class="mt-10 border-t border-slate-800 pt-8">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-xl font-bold text-white flex items-center space-x-2">
+              <i data-lucide="calendar" class="w-5 h-5 text-indigo-400"></i>
+              <span>Logged History Calendar</span>
+            </h3>
+            <p class="text-xs text-slate-400">Click any highlighted date to open daily summary logs.</p>
+          </div>
+          <div class="flex space-x-2">
+            <button onclick="changeMonth(-1)" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+            <span id="calendarMonthYear" class="px-3 py-1 bg-slate-800 rounded-lg text-sm font-semibold flex items-center"></span>
+            <button onclick="changeMonth(1)" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-4">
+          <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-slate-400 mb-2">
+            <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+          </div>
+          <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: WORKOUT & CARDIO -->
+    <div id="content-workout" class="tab-content space-y-6 hidden">
+      
+      <!-- Day Selection Switcher -->
+      <div class="flex flex-wrap gap-2 bg-slate-800/50 p-2 rounded-2xl border border-slate-700/60">
+        <button type="button" onclick="switchWorkoutDay('dayA')" id="btnDayA" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-md transition-all">Day A (Lower/Push)</button>
+        <button type="button" onclick="switchWorkoutDay('dayB')" id="btnDayB" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-slate-800 text-slate-400 hover:text-white transition-all">Day B (Pull/Single-Leg)</button>
+        <button type="button" onclick="switchWorkoutDay('dayC')" id="btnDayC" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-slate-800 text-slate-400 hover:text-white transition-all">Day C (Hypertrophy/Core)</button>
+      </div>
+      <div class="flex flex-wrap items-center gap-3 px-1">
+        <span id="workoutJsonStatus" class="text-xs text-slate-500">Loading workout data...</span>
+        <span id="foodJsonStatus" class="text-xs text-slate-500 hidden"></span>
+        <button type="button" onclick="document.getElementById('workoutsFileInput').click()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-600 text-slate-200 hover:bg-slate-700">Load local workouts.json</button>
+        <input type="file" id="workoutsFileInput" accept=".json,application/json" class="hidden" onchange="reloadWorkoutsFromFile(this.files[0]); this.value='';">
+      </div>
+
+      <!-- Workout Routine Exercises Form -->
+      <form id="workoutForm" onsubmit="handleWorkoutSubmit(event)" class="space-y-6">
+        
+        <div id="workoutContainer" class="space-y-4">
+          <!-- Dynamically populated from workouts.json based on active day selection -->
+        </div>
+
+        <!-- Cardio & Hockey Section -->
+        <div class="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center space-x-2 border-b border-slate-700/60 pb-3">
+            <i data-lucide="activity" class="w-5 h-5 text-amber-400"></i>
+            <h4 class="font-bold text-slate-100 text-base">Cardio & On-Ice Sports Tracker</h4>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+            <div class="sm:col-span-3 flex items-center space-x-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+              <input type="checkbox" id="cardio_completed" class="w-4 h-4 text-indigo-600 rounded border-slate-700 bg-slate-800">
+              <label for="cardio_completed" class="text-sm font-medium text-slate-300 cursor-pointer">Cardio Done</label>
+            </div>
+            <div class="sm:col-span-9">
+              <input type="text" id="cardio_details" placeholder="e.g. Thursday Night Hockey (60 mins high intensity) or 30 min treadmill walk" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 text-white">
+            </div>
+          </div>
+        </div>
+
+        <!-- Calorie Calculator & Actions -->
+        <div class="bg-slate-950/80 border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <button type="button" onclick="calculateCaloriesBurned()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-sm border border-slate-700 flex items-center space-x-2 transition-all">
+              <i data-lucide="calculator" class="w-4 h-4"></i>
+              <span>Calculate Estimated Calorie Burn</span>
+            </button>
+            <p id="calorieEstimateResult" class="text-xs text-slate-400 mt-2">Estimated burn: <span class="font-bold text-slate-200">0 kcal</span> (Based on 240lb user profile)</p>
+          </div>
+
+          <button type="submit" class="w-full md:w-auto px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-white shadow-lg shadow-indigo-600/20 flex items-center justify-center space-x-2 transition-all">
+            <i data-lucide="save" class="w-5 h-5"></i>
+            <span>Submit Workout Log</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- TAB 4: WEEKLY TRAINING SCHEDULE -->
+    <div id="content-schedule" class="tab-content space-y-6 hidden">
+      <div class="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-6">
+        <div class="mb-6">
+          <h3 class="text-xl font-bold text-white">Weekly Athletic Blueprint</h3>
+          <p class="text-sm text-slate-400">Designed around Thursday Night Hockey to maximize energy, leg drive, and full recovery.</p>
+        </div>
+
+        <div class="space-y-4">
+          
+          <!-- Monday -->
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center space-x-4">
+              <span class="w-24 px-3 py-1 rounded-lg bg-indigo-900/50 text-indigo-300 font-bold text-xs uppercase tracking-wider text-center border border-indigo-700/50">Monday</span>
+              <div>
+                <h4 class="font-bold text-slate-100 text-sm">Strength Day A: Lower Heavy & Upper Push</h4>
+                <p class="text-xs text-slate-400 mt-0.5">Barbell Squats, DB Incline Bench, Chest-Supported Rows, RDLs</p>
+              </div>
+            </div>
+            <span class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full w-max">Full Body Strength</span>
+          </div>
+
+          <!-- Tuesday -->
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center space-x-4">
+              <span class="w-24 px-3 py-1 rounded-lg bg-emerald-900/50 text-emerald-300 font-bold text-xs uppercase tracking-wider text-center border border-emerald-700/50">Tuesday</span>
+              <div>
+                <h4 class="font-bold text-slate-100 text-sm">Active Recovery / Rec Sports</h4>
+                <p class="text-xs text-slate-400 mt-0.5">30-45 min light walk, casual sports, or mobility stretching</p>
+              </div>
+            </div>
+            <span class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full w-max">Cardio & Mobility</span>
+          </div>
+
+          <!-- Wednesday -->
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center space-x-4">
+              <span class="w-24 px-3 py-1 rounded-lg bg-indigo-900/50 text-indigo-300 font-bold text-xs uppercase tracking-wider text-center border border-indigo-700/50">Wednesday</span>
+              <div>
+                <h4 class="font-bold text-slate-100 text-sm">Strength Day B: Pull Focus & Single-Leg Stability</h4>
+                <p class="text-xs text-slate-400 mt-0.5">Deadlifts, DB Overhead Press, Lat Pulldowns, Bulgarian Split Squats</p>
+              </div>
+            </div>
+            <span class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full w-max">Hips & Posterior Chain</span>
+          </div>
+
+          <!-- Thursday -->
+          <div class="bg-slate-900/60 border border-amber-800/40 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-amber-950/10">
+            <div class="flex items-center space-x-4">
+              <span class="w-24 px-3 py-1 rounded-lg bg-amber-900/50 text-amber-300 font-bold text-xs uppercase tracking-wider text-center border border-amber-700/50">Thursday</span>
+              <div>
+                <h4 class="font-bold text-amber-200 text-sm">GAME DAY: Thursday Night Hockey</h4>
+                <p class="text-xs text-amber-300/70 mt-0.5">Focus on pre-game carbs 2.5h prior. High-intensity anaerobic output on ice.</p>
+              </div>
+            </div>
+            <span class="text-xs bg-amber-900/40 text-amber-200 border border-amber-700/40 px-3 py-1 rounded-full w-max">High Energy Game</span>
+          </div>
+
+          <!-- Friday -->
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center space-x-4">
+              <span class="w-24 px-3 py-1 rounded-lg bg-slate-800 text-slate-400 font-bold text-xs uppercase tracking-wider text-center border border-slate-700">Friday</span>
+              <div>
+                <h4 class="font-bold text-slate-100 text-sm">Passive Rest & Post-Ice Recovery</h4>
+                <p class="text-xs text-slate-400 mt-0.5">Hydration, foam rolling, sauna/hot shower. No resistance training.</p>
+              </div>
+            </div>
+            <span class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full w-max">Complete Rest</span>
+          </div>
+
+          <!-- Saturday -->
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center space-x-4">
+              <span class="w-24 px-3 py-1 rounded-lg bg-indigo-900/50 text-indigo-300 font-bold text-xs uppercase tracking-wider text-center border border-indigo-700/50">Saturday</span>
+              <div>
+                <h4 class="font-bold text-slate-100 text-sm">Strength Day C: Hypertrophy & Rotational Power</h4>
+                <p class="text-xs text-slate-400 mt-0.5">Flat DB Bench, T-Bar Rows, Walking Lunges, Face Pulls, Arms</p>
+              </div>
+            </div>
+            <span class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full w-max">Hypertrophy & Core</span>
+          </div>
+
+          <!-- Sunday -->
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center space-x-4">
+              <span class="w-24 px-3 py-1 rounded-lg bg-slate-800 text-slate-400 font-bold text-xs uppercase tracking-wider text-center border border-slate-700">Sunday</span>
+              <div>
+                <h4 class="font-bold text-slate-100 text-sm">Active Rest & Recovery</h4>
+                <p class="text-xs text-slate-400 mt-0.5">Light walk with family/dog, dynamic stretching, prep meals for the week</p>
+              </div>
+            </div>
+            <span class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full w-max">Active Recovery</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- DYNAMIC MACRO SELECTION MODAL -->
+  <div id="macroSelectionModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-xl rounded-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <div>
+          <h3 id="macroModalTitle" class="font-bold text-lg text-white">Select Food Source</h3>
+          <p id="macroModalSubtitle" class="text-xs text-slate-400">Add or remove items for this meal time</p>
+        </div>
+        <button onclick="closeModal('macroSelectionModal')" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div id="macroModalContent" class="p-6 overflow-y-auto space-y-3">
+        <!-- Dynamically rendered list of foods with add/remove buttons -->
+      </div>
+
+      <div class="p-4 border-t border-slate-800 bg-slate-950 flex justify-end">
+        <button onclick="closeModal('macroSelectionModal')" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white text-sm transition-all">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: MEAL IDEAS -->
+  <div id="mealIdeasModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-3xl rounded-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <h3 class="font-bold text-lg text-white flex items-center space-x-2">
+          <i data-lucide="utensils" class="w-5 h-5 text-indigo-400"></i>
+          <span>5 Daily Meal Plans (~2200-2400 kcal, ~180-200g Protein)</span>
+        </h3>
+        <button onclick="closeModal('mealIdeasModal')" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      
+      <div class="p-6 overflow-y-auto space-y-6 text-sm text-slate-300">
+        
+        <!-- Plan 1 -->
+        <div class="bg-slate-800/50 border border-slate-700/60 p-4 rounded-xl">
+          <h4 class="font-bold text-indigo-300 text-base mb-2">Option 1: The Classic Hockey Athlete Plan</h4>
+          <ul class="space-y-1 list-disc list-inside text-xs text-slate-300">
+            <li><strong class="text-slate-200">Breakfast:</strong> 3 eggs + 3 egg whites scramble with spinach, 1 cup cooked oatmeal with 1/2 cup blueberries (42g P, 450 kcal)</li>
+            <li><strong class="text-slate-200">Lunch:</strong> 6 oz grilled chicken breast, 1 cup brown rice, broccoli with 1 tsp olive oil (50g P, 520 kcal)</li>
+            <li><strong class="text-slate-200">Afternoon:</strong> 1 cup 2% Greek yogurt + 1 scoop whey protein + 1 banana (40g P, 350 kcal)</li>
+            <li><strong class="text-slate-200">Dinner:</strong> 7 oz 93/7 extra lean ground turkey, 1 medium sweet potato, side salad (50g P, 580 kcal)</li>
+            <li><strong class="text-slate-200">Night:</strong> 1 cup low-fat cottage cheese or whey shake (28g P, 180 kcal)</li>
+          </ul>
+        </div>
+
+        <!-- Plan 2 -->
+        <div class="bg-slate-800/50 border border-slate-700/60 p-4 rounded-xl">
+          <h4 class="font-bold text-indigo-300 text-base mb-2">Option 2: Steak & Salmon Strength Focus</h4>
+          <ul class="space-y-1 list-disc list-inside text-xs text-slate-300">
+            <li><strong class="text-slate-200">Breakfast:</strong> Protein smoothie (2 scoops whey, 1 cup almond milk, 1 cup frozen berries, 1 tbsp peanut butter) (50g P, 480 kcal)</li>
+            <li><strong class="text-slate-200">Lunch:</strong> 7 oz sirloin steak (trimmed), 1 medium baked potato, asparagus (52g P, 550 kcal)</li>
+            <li><strong class="text-slate-200">Afternoon:</strong> 2 hard-boiled eggs + 2 slices Ezekiel bread with 3 oz deli turkey (32g P, 340 kcal)</li>
+            <li><strong class="text-slate-200">Dinner:</strong> 6 oz Atlantic salmon fillet, 1 cup quinoa, roasted zucchini (42g P, 580 kcal)</li>
+            <li><strong class="text-slate-200">Night:</strong> 1 scoop Micellar Casein protein in water (25g P, 120 kcal)</li>
+          </ul>
+        </div>
+
+        <!-- Plan 3 -->
+        <div class="bg-slate-800/50 border border-slate-700/60 p-4 rounded-xl">
+          <h4 class="font-bold text-indigo-300 text-base mb-2">Option 3: Quick Prep & On-The-Go</h4>
+          <ul class="space-y-1 list-disc list-inside text-xs text-slate-300">
+            <li><strong class="text-slate-200">Breakfast:</strong> 1.5 cups egg white omelet with peppers and 2 oz lean ham + 2 slices whole wheat toast (40g P, 400 kcal)</li>
+            <li><strong class="text-slate-200">Lunch:</strong> 2 cans (10 oz total) tuna packed in water mixed with 1 tbsp mayo, whole wheat wrap, apple (55g P, 490 kcal)</li>
+            <li><strong class="text-slate-200">Afternoon:</strong> Protein bar (20g P) + 1 cup Greek yogurt (20g P, 360 kcal)</li>
+            <li><strong class="text-slate-200">Dinner:</strong> 7 oz grilled chicken thighs (skinless), 1 cup white rice, green beans (46g P, 560 kcal)</li>
+            <li><strong class="text-slate-200">Night:</strong> 1 cup cottage cheese with 10 almonds (28g P, 220 kcal)</li>
+          </ul>
+        </div>
+
+        <!-- Plan 4 -->
+        <div class="bg-slate-800/50 border border-slate-700/60 p-4 rounded-xl">
+          <h4 class="font-bold text-indigo-300 text-base mb-2">Option 4: Thursday Game-Day Carbo-Focus Plan</h4>
+          <ul class="space-y-1 list-disc list-inside text-xs text-slate-300">
+            <li><strong class="text-slate-200">Breakfast:</strong> 3 whole eggs + 1 cup oats cooked in milk + honey (38g P, 520 kcal)</li>
+            <li><strong class="text-slate-200">Lunch (3-4h Pre-Game):</strong> 7 oz chicken breast, 1.5 cups jasmine rice, steamed carrots (52g P, 610 kcal)</li>
+            <li><strong class="text-slate-200">Pre-Hockey Snack (1.5h before):</strong> 1 scoop whey + 1 rice cake with jam (26g P, 220 kcal)</li>
+            <li><strong class="text-slate-200">Post-Game Recovery:</strong> 7 oz extra lean ground beef bowl with white rice & salsa (52g P, 580 kcal)</li>
+            <li><strong class="text-slate-200">Night:</strong> Casein Shake or Greek Yogurt (25g P, 140 kcal)</li>
+          </ul>
+        </div>
+
+        <!-- Plan 5 -->
+        <div class="bg-slate-800/50 border border-slate-700/60 p-4 rounded-xl">
+          <h4 class="font-bold text-indigo-300 text-base mb-2">Option 5: High Power Pork & Turkey Protocol</h4>
+          <ul class="space-y-1 list-disc list-inside text-xs text-slate-300">
+            <li><strong class="text-slate-200">Breakfast:</strong> 4 scrambled eggs, 3 slices turkey bacon, 1 orange (35g P, 420 kcal)</li>
+            <li><strong class="text-slate-200">Lunch:</strong> 7 oz pork tenderloin roast, 1 medium sweet potato, roasted broccoli (48g P, 480 kcal)</li>
+            <li><strong class="text-slate-200">Afternoon:</strong> 1 scoop whey + 1/2 cup oatmeal blended smoothie (32g P, 310 kcal)</li>
+            <li><strong class="text-slate-200">Dinner:</strong> 8 oz turkey burgers (no bun), large garden salad with avocado, olive oil (54g P, 600 kcal)</li>
+            <li><strong class="text-slate-200">Night:</strong> 1 cup Greek yogurt + chia seeds (25g P, 180 kcal)</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PROTEIN IDEAS -->
+  <div id="proteinIdeasModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-3xl rounded-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <h3 class="font-bold text-lg text-white flex items-center space-x-2">
+          <i data-lucide="list" class="w-5 h-5 text-indigo-400"></i>
+          <span>20 High-Protein Foods (Serving Sizes & Yield)</span>
+        </h3>
+        <button onclick="closeModal('proteinIdeasModal')" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="p-6 overflow-y-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">1. Chicken Breast (6 oz raw)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">48g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">2. Extra Lean Ground Turkey 93/7 (6 oz)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">42g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">3. Whey Protein Isolate (1 scoop)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">25g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">4. 0% Plain Greek Yogurt (1 cup)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">24g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">5. Egg Whites (1 cup / ~8 whites)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">26g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">6. Canned Tuna in Water (1 can / 5 oz)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">32g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">7. Sirloin Steak - Trimmed (6 oz)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">46g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">8. Salmon Fillet (6 oz)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">38g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">9. Low Fat Cottage Cheese 2% (1 cup)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">28g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">10. Pork Tenderloin (6 oz)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">44g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">11. Whole Eggs (3 large)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">18g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">12. Lean Deli Turkey Breast (4 oz)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">22g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">13. Extra Lean Ground Beef 90/10 (6 oz)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">42g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">14. Halibut or Cod Fillet (6 oz)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">36g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">15. Shrimp - Cooked (6 oz)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">40g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">16. Tofu - Extra Firm (1 block / 8 oz)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">20g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">17. Micellar Casein Protein (1 scoop)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">24g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">18. Fairlife Ultra-Filtered Milk (1 cup)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">13g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">19. Edamame Beans (1 cup cooked)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">18g Protein</span></div>
+          <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-xs font-semibold text-slate-200">20. Beef Jerky / Biltong (2 oz)</span><span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-1 rounded">28g Protein</span></div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CALENDAR DAY DETAILS -->
+  <div id="calendarDetailsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <div>
+          <h3 id="calModalDateTitle" class="font-bold text-lg text-white">Log Entry Details</h3>
+          <p class="text-xs text-slate-400">Stored in local offline database</p>
+        </div>
+        <button onclick="closeModal('calendarDetailsModal')" class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div id="calModalContent" class="p-6 overflow-y-auto space-y-6">
+        <!-- Content inserted dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       DATA + LOCAL LOGS (sql.js app.db / JSON fallback + IndexedDB logs)
+       ========================================================================== */
+    const DB_NAME = 'BodyRecompDB_240lb';
+    const DB_VERSION = 1;
+    let dbInstance = null;
+
+    let FOOD_DATABASE = { proteins: [], veggies: [], carbs: [], fats: [] };
+    let WORKOUT_DATABASE = {};
+    let TOOLTIP_DATABASE = {};
+    let SQL_DB = null;
+
+    let activeFoodSelections = {
+      morning: new Set(),
+      afternoon: new Set(),
+      night: new Set()
+    };
+
+    function setAppDataStatus(msg, ok) {
+      const el = document.getElementById('appDataStatus');
+      if (!el) return;
+      el.textContent = msg;
+      const badge = el.parentElement;
+      if (badge) {
+        const dot = badge.querySelector('span.w-2');
+        if (dot) {
+          dot.className = ok
+            ? 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse'
+            : 'w-2 h-2 rounded-full bg-amber-500';
+        }
+      }
+    }
+
+    async function initSqlJsDb() {
+      if (typeof initSqlJs !== 'function') throw new Error('sql.js not available');
+      const SQL = await initSqlJs({
+        locateFile: (file) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
+      });
+      const resp = await fetch('data/app.db?t=' + Date.now(), { cache: 'no-store' });
+      if (!resp.ok) throw new Error('app.db HTTP ' + resp.status);
+      const buf = await resp.arrayBuffer();
+      SQL_DB = new SQL.Database(new Uint8Array(buf));
+      return SQL_DB;
+    }
+
+    function foodsFromSql(db) {
+      const out = { proteins: [], veggies: [], carbs: [], fats: [] };
+      const rows = db.exec('SELECT category, id, name, portion, calories, protein FROM foods ORDER BY category, id');
+      if (!rows.length) return out;
+      const cols = rows[0].columns;
+      for (const values of rows[0].values) {
+        const row = Object.fromEntries(cols.map((c, i) => [c, values[i]]));
+        const cat = row.category;
+        if (!out[cat]) out[cat] = [];
+        out[cat].push({
+          id: row.id,
+          name: row.name,
+          portion: row.portion,
+          calories: row.calories,
+          protein: row.protein
+        });
+      }
+      return out;
+    }
+
+    function workoutsFromSql(db) {
+      const out = {};
+      const days = db.exec('SELECT day_key, title FROM workout_days');
+      if (!days.length) return out;
+      for (const values of days[0].values) {
+        const [day_key, title] = values;
+        out[day_key] = { title, exercises: [] };
+      }
+      const ex = db.exec(
+        'SELECT day_key, id, name, sets, est_burn, sort_order FROM workout_exercises ORDER BY day_key, sort_order, id'
+      );
+      if (ex.length) {
+        for (const values of ex[0].values) {
+          const [day_key, id, name, sets, est_burn] = values;
+          if (!out[day_key]) out[day_key] = { title: day_key, exercises: [] };
+          out[day_key].exercises.push({ id, name, sets, estBurn: est_burn });
+        }
+      }
+      return out;
+    }
+
+    function tooltipsFromSql(db) {
+      const out = {};
+      const tip = db.exec('SELECT id, name, how_to, sets, est_burn, section_key, extra_json FROM workout_tooltips');
+      if (!tip.length) return out;
+      const cols = tip[0].columns;
+      for (const values of tip[0].values) {
+        const row = Object.fromEntries(cols.map((c, i) => [c, values[i]]));
+        out[row.id] = {
+          id: row.id,
+          name: row.name,
+          how_to: row.how_to,
+          sets: row.sets,
+          estBurn: row.est_burn,
+          section_key: row.section_key,
+          extra: row.extra_json ? JSON.parse(row.extra_json) : null
+        };
+      }
+      return out;
+    }
+
+    async function loadFromSqlite() {
+      await initSqlJsDb();
+      FOOD_DATABASE = foodsFromSql(SQL_DB);
+      WORKOUT_DATABASE = workoutsFromSql(SQL_DB);
+      TOOLTIP_DATABASE = tooltipsFromSql(SQL_DB);
+      const foodCount = Object.values(FOOD_DATABASE).reduce((n, a) => n + (a ? a.length : 0), 0);
+      const dayCount = Object.keys(WORKOUT_DATABASE).length;
+      if (!foodCount || !dayCount) throw new Error('app.db missing expected rows');
+      setJsonLoadStatus('food', true, 'Foods from data/app.db');
+      setJsonLoadStatus('workout', true, 'Workouts from data/app.db');
+      setAppDataStatus('SQLite data ready', true);
+    }
+
+    async function loadFromJsonFallback() {
+      const foodResp = await fetch('foods.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!foodResp.ok) throw new Error('foods.json HTTP ' + foodResp.status);
+      FOOD_DATABASE = await foodResp.json();
+
+      const workoutResp = await fetch('workouts.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!workoutResp.ok) throw new Error('workouts.json HTTP ' + workoutResp.status);
+      WORKOUT_DATABASE = await workoutResp.json();
+
+      try {
+        const tipResp = await fetch('workouttooltip.json?t=' + Date.now(), { cache: 'no-store' });
+        if (tipResp.ok) {
+          const tipJson = await tipResp.json();
+          TOOLTIP_DATABASE = {};
+          Object.keys(tipJson).forEach((sectionKey) => {
+            const section = tipJson[sectionKey];
+            (section.exercises || []).forEach((ex) => {
+              TOOLTIP_DATABASE[ex.id] = {
+                id: ex.id,
+                name: ex.name,
+                how_to: ex['How To'] || ex.how_to || ex.howTo || null,
+                sets: ex.sets || null,
+                estBurn: ex.estBurn != null ? ex.estBurn : null,
+                section_key: sectionKey
+              };
+            });
+          });
+        }
+      } catch (tipErr) {
+        console.warn('Optional workouttooltip.json not loaded', tipErr);
+      }
+
+      setJsonLoadStatus('food', true, 'Loaded from foods.json');
+      setJsonLoadStatus('workout', true, 'Loaded from workouts.json');
+      setAppDataStatus('JSON data ready', true);
+    }
+
+    async function loadFoodDatabase() {
+      loadDietDraft();
+    }
+
+    async function loadWorkoutDatabase() {
+      renderWorkoutExercises();
+    }
+
+    async function loadAppData() {
+      try {
+        await loadFromSqlite();
+      } catch (err) {
+        console.warn('SQLite data/app.db load failed; falling back to JSON.', err);
+        try {
+          await loadFromJsonFallback();
+        } catch (jsonErr) {
+          console.error('JSON fallback failed', jsonErr);
+          FOOD_DATABASE = FOOD_DATABASE && Object.keys(FOOD_DATABASE).length
+            ? FOOD_DATABASE
+            : { proteins: [], carbs: [], fats: [], veggies: [] };
+          WORKOUT_DATABASE = WORKOUT_DATABASE && Object.keys(WORKOUT_DATABASE).length
+            ? WORKOUT_DATABASE
+            : {};
+          setJsonLoadStatus('food', false, 'Food data unavailable');
+          setJsonLoadStatus('workout', false, 'Workout data unavailable');
+          setAppDataStatus('Data load failed', false);
+        }
+      }
+      await loadFoodDatabase();
+      await loadWorkoutDatabase();
+    }
+
+    async function reloadFoodsFromFile(file) {
+      if (!file) return;
+      const data = JSON.parse(await file.text());
+      FOOD_DATABASE = data;
+      setJsonLoadStatus('food', true, 'Loaded from ' + file.name);
+      setAppDataStatus('Local foods loaded', true);
+      loadDietDraft();
+    }
+
+    async function reloadWorkoutsFromFile(file) {
+      if (!file) return;
+      const data = JSON.parse(await file.text());
+      WORKOUT_DATABASE = data;
+      setJsonLoadStatus('workout', true, 'Loaded from ' + file.name);
+      setAppDataStatus('Local workouts loaded', true);
+      renderWorkoutExercises();
+    }
+
+    function setJsonLoadStatus(kind, ok, msg) {
+      const el = document.getElementById(kind === 'workout' ? 'workoutJsonStatus' : 'foodJsonStatus');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = ok
+        ? 'text-xs text-emerald-400'
+        : 'text-xs text-amber-400';
+      if (kind === 'food') el.classList.remove('hidden');
+    }
+
+
+function initDatabase() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB) {
+          console.warn("IndexedDB not supported, using LocalStorage fallback.");
+          resolve(null);
+          return;
+        }
+
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('diet_logs')) {
+            db.createObjectStore('diet_logs', { keyPath: 'date' });
+          }
+          if (!db.objectStoreNames.contains('workout_logs')) {
+            db.createObjectStore('workout_logs', { keyPath: 'date' });
+          }
+        };
+
+        request.onsuccess = (e) => {
+          dbInstance = e.target.result;
+          resolve(dbInstance);
+        };
+
+        request.onerror = (e) => {
+          console.error("IndexedDB error:", e);
+          resolve(null);
+        };
+      });
+    }
+
+    async function saveToDB(storeName, data) {
+      if (dbInstance) {
+        return new Promise((resolve) => {
+          const tx = dbInstance.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          store.put(data);
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve(false);
+        });
+      } else {
+        const key = `${storeName}_${data.date}`;
+        localStorage.setItem(key, JSON.stringify(data));
+        return true;
+      }
+    }
+
+    async function getFromDB(storeName, dateKey) {
+      if (dbInstance) {
+        return new Promise((resolve) => {
+          const tx = dbInstance.transaction(storeName, 'readonly');
+          const store = tx.objectStore(storeName);
+          const request = store.get(dateKey);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => resolve(null);
+        });
+      } else {
+        const key = `${storeName}_${dateKey}`;
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : null;
+      }
+    }
+
+    async function getAllFromDB(storeName) {
+      if (dbInstance) {
+        return new Promise((resolve) => {
+          const tx = dbInstance.transaction(storeName, 'readonly');
+          const store = tx.objectStore(storeName);
+          const request = store.getAll();
+          request.onsuccess = () => resolve(request.result || []);
+          request.onerror = () => resolve([]);
+        });
+      } else {
+        const results = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key.startsWith(`${storeName}_`)) {
+            results.push(JSON.parse(localStorage.getItem(key)));
+          }
+        }
+        return results;
+      }
+    }
+
+    /* ==========================================================================
+       TAB NAVIGATION SYSTEM
+       ========================================================================== */
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('text-indigo-400', 'bg-indigo-950/50', 'border', 'border-indigo-800/50');
+        btn.classList.add('text-slate-400');
+      });
+
+      const targetContent = document.getElementById(`content-${tabId}`);
+      const targetBtn = document.getElementById(`tab-${tabId}`);
+
+      if (targetContent) targetContent.classList.remove('hidden');
+      if (targetBtn) {
+        targetBtn.classList.remove('text-slate-400');
+        targetBtn.classList.add('text-indigo-400', 'bg-indigo-950/50', 'border', 'border-indigo-800/50');
+      }
+
+      if (tabId === 'diet') renderCalendar();
+    }
+
+    /* ==========================================================================
+       MODAL SYSTEM
+       ========================================================================== */
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    /* ==========================================================================
+       MACRO SELECTION MODAL & DIET FOOD RENDERER
+       ========================================================================== */
+    const DRAFT_STORAGE_KEY = 'daily_diet_draft_240lb_v2';
+    const MEAL_TIMES = ['morning', 'afternoon', 'night'];
+
+    function openFoodCategoryModal(category, mealTime) {
+      const categoryNames = {
+        proteins: 'Protein Foods',
+        carbs: 'Carbohydrates',
+        fats: 'Healthy Fats',
+        veggies: 'Vegetables'
+      };
+
+      const mealNames = {
+        morning: 'Morning Meal',
+        afternoon: 'Afternoon Meal',
+        night: 'Night Snack'
+      };
+
+      document.getElementById('macroModalTitle').innerText = `${categoryNames[category] || 'Foods'} (${mealNames[mealTime]})`;
+      document.getElementById('macroModalSubtitle').innerText = `Click 'Add' or 'Remove' to manage your active foods list.`;
+
+      const foods = FOOD_DATABASE[category] || [];
+      const container = document.getElementById('macroModalContent');
+
+      let html = '';
+      foods.forEach(food => {
+        const foodKey = `${category}_${food.id}`;
+        const isAdded = activeFoodSelections[mealTime].has(foodKey);
+
+        html += `
+          <div class="bg-slate-800/60 border border-slate-700 p-3 rounded-xl flex items-center justify-between gap-3">
+            <div>
+              <p class="text-sm font-semibold text-slate-200">${food.name}</p>
+              <p class="text-xs text-slate-400">${food.portion} • <span class="text-amber-400">${food.calories} kcal</span> • <span class="text-indigo-400">${food.protein}g Protein</span></p>
+            </div>
+            <div>
+              ${isAdded ? `
+                <button type="button" onclick="toggleFoodItem('${category}', '${food.id}', '${mealTime}', false)" class="px-3 py-1.5 rounded-lg bg-rose-900/60 hover:bg-rose-800 border border-rose-700/60 text-rose-200 text-xs font-bold transition-all flex items-center space-x-1">
+                  <i data-lucide="minus-circle" class="w-3.5 h-3.5"></i>
+                  <span>Remove</span>
+                </button>
+              ` : `
+                <button type="button" onclick="toggleFoodItem('${category}', '${food.id}', '${mealTime}', true)" class="px-3 py-1.5 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-700/60 text-emerald-200 text-xs font-bold transition-all flex items-center space-x-1">
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                  <span>Add</span>
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      openModal('macroSelectionModal');
+      lucide.createIcons();
+    }
+
+    function toggleFoodItem(category, foodId, mealTime, shouldAdd) {
+      const foodKey = `${category}_${foodId}`;
+      if (shouldAdd) {
+        activeFoodSelections[mealTime].add(foodKey);
+      } else {
+        activeFoodSelections[mealTime].delete(foodKey);
+      }
+
+      renderFoodSections();
+      openFoodCategoryModal(category, mealTime);
+      autoSaveDietDraft();
+    }
+
+    function renderFoodSections() {
+      MEAL_TIMES.forEach(time => {
+        const container = document.getElementById(`${time}_foods_container`);
+        if (!container) return;
+
+        let html = '';
+        const categories = [
+          { key: 'proteins', title: 'Proteins', color: 'text-indigo-400' },
+          { key: 'carbs', title: 'Carbohydrates', color: 'text-amber-400' },
+          { key: 'fats', title: 'Healthy Fats', color: 'text-sky-400' },
+          { key: 'veggies', title: 'Vegetables', color: 'text-emerald-400' }
+        ];
+
+        let hasAnyItem = false;
+
+        categories.forEach(cat => {
+          if (!FOOD_DATABASE[cat.key]) return;
+
+          const categoryItems = FOOD_DATABASE[cat.key].filter(food => activeFoodSelections[time].has(`${cat.key}_${food.id}`));
+          if (categoryItems.length === 0) return;
+
+          hasAnyItem = true;
+          html += `
+            <div class="space-y-2">
+              <h5 class="text-xs font-bold uppercase tracking-wider ${cat.color}">${cat.title}</h5>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          `;
+
+          categoryItems.forEach(food => {
+            const elementId = `${time}_${cat.key}_${food.id}`;
+            html += `
+              <div class="bg-slate-900/60 border border-slate-800 p-2.5 rounded-xl flex items-center justify-between gap-2">
+                <label class="flex items-center space-x-2.5 cursor-pointer flex-1 min-w-0">
+                  <input type="checkbox" id="${elementId}_check" onchange="autoSaveDietDraft()" class="food-checkbox w-4 h-4 text-indigo-600 rounded border-slate-700 bg-slate-800 focus:ring-indigo-500">
+                  <div class="truncate">
+                    <p class="text-xs font-semibold text-slate-200 truncate">${food.name}</p>
+                    <p class="text-[10px] text-slate-400">${food.portion} • <span class="text-amber-400">${food.calories} kcal</span> • <span class="text-indigo-400">${food.protein}g P</span></p>
+                  </div>
+                </label>
+                <div class="flex items-center space-x-1 shrink-0">
+                  <span class="text-[10px] text-slate-400">Qty:</span>
+                  <input type="number" id="${elementId}_qty" value="1" min="0.5" step="0.5" oninput="autoSaveDietDraft()" class="w-12 bg-slate-800 border border-slate-700 text-xs text-center rounded-md text-white py-0.5 focus:outline-none focus:border-indigo-500">
+                  <button type="button" onclick="toggleFoodItem('${cat.key}', '${food.id}', '${time}', false)" class="text-slate-500 hover:text-rose-400 p-1" title="Remove food">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+            `;
+          });
+
+          html += `</div></div>`;
+        });
+
+        if (!hasAnyItem) {
+          html = `<p class="text-xs text-slate-500 italic py-2">No foods added to this meal yet. Click Protein, Carbs, or Fats above to add items.</p>`;
+        }
+
+        container.innerHTML = html;
+        lucide.createIcons();
+      });
+    }
+
+    function calculateRealtimeCalories() {
+      let totalCalories = 0;
+      let totalProtein = 0;
+
+      MEAL_TIMES.forEach(time => {
+        ['proteins', 'veggies', 'carbs', 'fats'].forEach(cat => {
+          if (!FOOD_DATABASE[cat]) return;
+          FOOD_DATABASE[cat].forEach(food => {
+            const elementId = `${time}_${cat}_${food.id}`;
+            const chk = document.getElementById(`${elementId}_check`);
+            const qtyInput = document.getElementById(`${elementId}_qty`);
+
+            if (chk && chk.checked) {
+              const qty = parseFloat(qtyInput ? qtyInput.value : 1) || 1;
+              totalCalories += (food.calories * qty);
+              totalProtein += (food.protein * qty);
+            }
+          });
+        });
+
+        const otherCals = parseFloat(document.getElementById(`${time}_other_cals`)?.value) || 0;
+        const otherProt = parseFloat(document.getElementById(`${time}_other_prot`)?.value) || 0;
+        totalCalories += otherCals;
+        totalProtein += otherProt;
+      });
+
+      document.getElementById('liveCalorieDisplay').innerText = Math.round(totalCalories);
+      document.getElementById('liveProteinDisplay').innerText = `${Math.round(totalProtein)}g`;
+
+      return {
+        totalCalories: Math.round(totalCalories),
+        totalProtein: Math.round(totalProtein)
+      };
+    }
+
+    function autoSaveDietDraft() {
+      const stats = calculateRealtimeCalories();
+      const draft = {
+        activeSelections: {
+          morning: Array.from(activeFoodSelections.morning),
+          afternoon: Array.from(activeFoodSelections.afternoon),
+          night: Array.from(activeFoodSelections.night)
+        },
+        checkboxes: {},
+        quantities: {},
+        others: {},
+        notes: document.getElementById('diet_notes').value
+      };
+
+      MEAL_TIMES.forEach(time => {
+        ['proteins', 'veggies', 'carbs', 'fats'].forEach(cat => {
+          if (!FOOD_DATABASE[cat]) return;
+          FOOD_DATABASE[cat].forEach(food => {
+            const elementId = `${time}_${cat}_${food.id}`;
+            const chk = document.getElementById(`${elementId}_check`);
+            const qtyInput = document.getElementById(`${elementId}_qty`);
+
+            if (chk) draft.checkboxes[`${elementId}_check`] = chk.checked;
+            if (qtyInput) draft.quantities[`${elementId}_qty`] = qtyInput.value;
+          });
+        });
+
+        draft.others[`${time}_other_name`] = document.getElementById(`${time}_other_name`)?.value || '';
+        draft.others[`${time}_other_cals`] = document.getElementById(`${time}_other_cals`)?.value || '';
+        draft.others[`${time}_other_prot`] = document.getElementById(`${time}_other_prot`)?.value || '';
+      });
+
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    }
+
+    function loadDietDraft() {
+      const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!raw) {
+        // Default initial items
+        activeFoodSelections.morning.add('proteins_p3');
+        activeFoodSelections.morning.add('carbs_c1');
+        activeFoodSelections.afternoon.add('proteins_p1');
+        activeFoodSelections.afternoon.add('carbs_c2');
+        activeFoodSelections.night.add('proteins_p4');
+        renderFoodSections();
+        return;
+      }
+
+      try {
+        const draft = JSON.parse(raw);
+
+        if (draft.activeSelections) {
+          activeFoodSelections.morning = new Set(draft.activeSelections.morning || []);
+          activeFoodSelections.afternoon = new Set(draft.activeSelections.afternoon || []);
+          activeFoodSelections.night = new Set(draft.activeSelections.night || []);
+        }
+
+        renderFoodSections();
+
+        if (draft.checkboxes) {
+          for (const [id, value] of Object.entries(draft.checkboxes)) {
+            const el = document.getElementById(id);
+            if (el) el.checked = value;
+          }
+        }
+
+        if (draft.quantities) {
+          for (const [id, value] of Object.entries(draft.quantities)) {
+            const el = document.getElementById(id);
+            if (el) el.value = value;
+          }
+        }
+
+        if (draft.others) {
+          for (const [id, value] of Object.entries(draft.others)) {
+            const el = document.getElementById(id);
+            if (el) el.value = value;
+          }
+        }
+
+        if (draft.notes) {
+          document.getElementById('diet_notes').value = draft.notes;
+        }
+
+        calculateRealtimeCalories();
+      } catch (e) {
+        console.error("Error loading draft", e);
+      }
+    }
+
+    function resetDietForm() {
+      document.getElementById('dietForm').reset();
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      activeFoodSelections = { morning: new Set(), afternoon: new Set(), night: new Set() };
+      renderFoodSections();
+      calculateRealtimeCalories();
+    }
+
+    async function handleDietSubmit(e) {
+      e.preventDefault();
+      const today = new Date().toISOString().split('T')[0];
+      const nowString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const stats = calculateRealtimeCalories();
+
+      const selectedFoodsByMeal = { morning: [], afternoon: [], night: [] };
+
+      MEAL_TIMES.forEach(time => {
+        ['proteins', 'veggies', 'carbs', 'fats'].forEach(cat => {
+          if (!FOOD_DATABASE[cat]) return;
+          FOOD_DATABASE[cat].forEach(food => {
+            const elementId = `${time}_${cat}_${food.id}`;
+            const chk = document.getElementById(`${elementId}_check`);
+            const qtyInput = document.getElementById(`${elementId}_qty`);
+
+            if (chk && chk.checked) {
+              const qty = parseFloat(qtyInput ? qtyInput.value : 1) || 1;
+              selectedFoodsByMeal[time].push(`${food.name} (${qty}x ${food.portion})`);
+            }
+          });
+        });
+
+        const otherName = document.getElementById(`${time}_other_name`)?.value;
+        const otherCals = document.getElementById(`${time}_other_cals`)?.value;
+        if (otherName) {
+          selectedFoodsByMeal[time].push(`Other: ${otherName} (${otherCals || 0} kcal)`);
+        }
+      });
+
+      const payload = {
+        date: today,
+        timestamp: nowString,
+        totalProtein: stats.totalProtein,
+        calculatedCalories: stats.totalCalories,
+        notes: document.getElementById('diet_notes').value,
+        foodsEaten: {
+          morning: selectedFoodsByMeal.morning.join(', ') || 'None selected',
+          afternoon: selectedFoodsByMeal.afternoon.join(', ') || 'None selected',
+          night: selectedFoodsByMeal.night.join(', ') || 'None selected'
+        }
+      };
+
+      await saveToDB('diet_logs', payload);
+      resetDietForm();
+      renderCalendar();
+      alert(`Daily Diet Log submitted for ${today}!`);
+    }
+
+    /* ==========================================================================
+       WORKOUT TAB DATA & FUNCTIONS (Dynamic JSON Driven)
+       ========================================================================== */
+    let currentWorkoutDay = 'dayA';
+
+    function switchWorkoutDay(dayKey) {
+      currentWorkoutDay = dayKey;
+      document.getElementById('btnDayA').className = dayKey === 'dayA' ? "flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-md transition-all" : "flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-slate-800 text-slate-400 hover:text-white transition-all";
+      document.getElementById('btnDayB').className = dayKey === 'dayB' ? "flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-md transition-all" : "flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-slate-800 text-slate-400 hover:text-white transition-all";
+      document.getElementById('btnDayC').className = dayKey === 'dayC' ? "flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-md transition-all" : "flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-slate-800 text-slate-400 hover:text-white transition-all";
+
+      renderWorkoutExercises();
+    }
+
+    function renderWorkoutExercises() {
+      const container = document.getElementById('workoutContainer');
+      const program = WORKOUT_DATABASE[currentWorkoutDay];
+
+      if (!program) return;
+
+      let html = `
+        <div class="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+            <h4 class="font-bold text-indigo-300 text-base">${program.title}</h4>
+            <span class="text-xs text-slate-400 font-medium">Loaded from JSON • Check off sets</span>
+          </div>
+          <div class="space-y-3">
+      `;
+
+      program.exercises.forEach((ex, idx) => {
+        const tip = TOOLTIP_DATABASE[ex.id] || {};
+        const howTo = tip.how_to || '';
+        const showGoblet = (ex.id === 'a1' || /goblet/i.test(ex.name || ''));
+        const howToHtml = howTo
+          ? (String(howTo).startsWith('http')
+              ? `<a href="${howTo}" target="_blank" rel="noopener" class="text-xs text-indigo-400 hover:underline">How to</a>`
+              : `<p class="text-xs text-slate-500 mt-1">${howTo}</p>`)
+          : '';
+        const imgHtml = showGoblet
+          ? `<img src="img/gobletsquat.png" alt="Goblet squat" class="w-14 h-14 object-cover rounded-lg border border-slate-700">`
+          : '';
+        html += `
+          <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" id="ex_check_${idx}" class="ex-checkbox w-4 h-4 text-indigo-600 rounded border-slate-700 bg-slate-800 focus:ring-indigo-500" data-burn="${ex.estBurn}">
+              ${imgHtml}
+              <div>
+                <p class="text-sm font-semibold text-slate-200">${ex.name}</p>
+                <p class="text-xs text-slate-400">${ex.sets}</p>
+                ${howToHtml}
+              </div>
+            </label>
+            <div class="flex items-center space-x-2">
+              <input type="number" placeholder="Weight (lbs)" id="ex_weight_${idx}" class="w-28 bg-slate-800 border border-slate-700 text-xs px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 text-white">
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div></div>`;
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function calculateCaloriesBurned() {
+      let totalBurn = 0;
+      const checkboxes = document.querySelectorAll('.ex-checkbox');
+      checkboxes.forEach(cb => {
+        if (cb.checked) {
+          totalBurn += Number(cb.dataset.burn) || 0;
+        }
+      });
+
+      const cardioDone = document.getElementById('cardio_completed').checked;
+      const cardioText = document.getElementById('cardio_details').value.toLowerCase();
+
+      if (cardioDone || cardioText.length > 0) {
+        if (cardioText.includes('hockey')) {
+          totalBurn += 650;
+        } else if (cardioText.includes('walk') || cardioText.includes('treadmill')) {
+          totalBurn += 250;
+        } else {
+          totalBurn += 350;
+        }
+      }
+
+      document.getElementById('calorieEstimateResult').innerHTML = `Estimated burn: <span class="font-bold text-amber-400 text-sm">${totalBurn} kcal</span> (Based on 240lb user mass)`;
+      return totalBurn;
+    }
+
+    async function handleWorkoutSubmit(e) {
+      e.preventDefault();
+      const today = new Date().toISOString().split('T')[0];
+      const nowString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const program = WORKOUT_DATABASE[currentWorkoutDay];
+
+      const completedExercises = [];
+      program.exercises.forEach((ex, idx) => {
+        const isDone = document.getElementById(`ex_check_${idx}`)?.checked;
+        const weight = document.getElementById(`ex_weight_${idx}`)?.value;
+        if (isDone || weight) {
+          completedExercises.push({ name: ex.name, sets: ex.sets, weight: weight || 'Bodyweight', completed: isDone });
+        }
+      });
+
+      const estimatedBurn = calculateCaloriesBurned();
+
+      const payload = {
+        date: today,
+        timestamp: nowString,
+        dayType: program.title,
+        completedExercises,
+        cardioCompleted: document.getElementById('cardio_completed').checked,
+        cardioDetails: document.getElementById('cardio_details').value,
+        estimatedBurn
+      };
+
+      await saveToDB('workout_logs', payload);
+      alert(`Workout Log submitted for ${today}!`);
+      renderCalendar();
+    }
+
+    /* ==========================================================================
+       INTERACTIVE CALENDAR ENGINE
+       ========================================================================== */
+    let currentCalDate = new Date();
+
+    function changeMonth(direction) {
+      currentCalDate.setMonth(currentCalDate.getMonth() + direction);
+      renderCalendar();
+    }
+
+    async function renderCalendar() {
+      const year = currentCalDate.getFullYear();
+      const month = currentCalDate.getMonth();
+
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      document.getElementById('calendarMonthYear').innerText = `${monthNames[month]} ${year}`;
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      const dietLogs = await getAllFromDB('diet_logs');
+      const workoutLogs = await getAllFromDB('workout_logs');
+
+      const loggedDates = new Set([
+        ...dietLogs.map(d => d.date),
+        ...workoutLogs.map(w => w.date)
+      ]);
+
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+
+      for (let i = 0; i < firstDay; i++) {
+        grid.innerHTML += `<div class="h-16 rounded-xl bg-slate-900/30"></div>`;
+      }
+
+      const todayString = new Date().toISOString().split('T')[0];
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const hasLog = loggedDates.has(dateKey);
+        const isToday = dateKey === todayString;
+
+        let dayClass = "h-16 rounded-xl border p-2 text-left flex flex-col justify-between cursor-pointer transition-all ";
+        if (hasLog) {
+          dayClass += "bg-indigo-950/40 border-indigo-500/50 hover:bg-indigo-900/50 text-white ";
+        } else if (isToday) {
+          dayClass += "bg-slate-800 border-amber-500/50 text-amber-300 ";
+        } else {
+          dayClass += "bg-slate-900/40 border-slate-800 text-slate-400 hover:bg-slate-800/40 ";
+        }
+
+        grid.innerHTML += `
+          <div onclick="openCalendarDateDetails('${dateKey}')" class="${dayClass}">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold">${day}</span>
+              ${hasLog ? '<span class="w-2 h-2 rounded-full bg-emerald-400"></span>' : ''}
+            </div>
+            ${hasLog ? '<span class="text-[10px] font-semibold text-indigo-300">View Log</span>' : ''}
+          </div>
+        `;
+      }
+    }
+
+    async function openCalendarDateDetails(dateKey) {
+      const diet = await getFromDB('diet_logs', dateKey);
+      const workout = await getFromDB('workout_logs', dateKey);
+
+      document.getElementById('calModalDateTitle').innerText = `Logs for ${dateKey}`;
+      const container = document.getElementById('calModalContent');
+
+      if (!diet && !workout) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-slate-400">
+            <i data-lucide="info" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+            <p>No diet or workout entries logged for this date.</p>
+          </div>
+        `;
+      } else {
+        let html = '';
+
+        if (diet) {
+          html += `
+            <div class="bg-slate-800/50 border border-slate-700 p-4 rounded-xl space-y-3">
+              <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                <h4 class="font-bold text-emerald-400 flex items-center space-x-2"><i data-lucide="utensils" class="w-4 h-4"></i><span>Diet Summary</span></h4>
+                <span class="text-xs text-slate-400">Logged at ${diet.timestamp || 'N/A'}</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-center pt-1">
+                <div class="bg-slate-900 p-2 rounded-lg"><p class="text-[10px] text-slate-400">Protein Target</p><p class="font-bold text-indigo-400 text-sm">${diet.totalProtein}g</p></div>
+                <div class="bg-slate-900 p-2 rounded-lg"><p class="text-[10px] text-slate-400">Calories Target</p><p class="font-bold text-amber-400 text-sm">${diet.calculatedCalories} kcal</p></div>
+              </div>
+              ${diet.foodsEaten ? `
+                <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-800 space-y-1 text-xs text-slate-300">
+                  <p class="font-semibold text-indigo-300">Specific Foods Logged:</p>
+                  <p>• <strong>Morning:</strong> ${diet.foodsEaten.morning}</p>
+                  <p>• <strong>Afternoon:</strong> ${diet.foodsEaten.afternoon}</p>
+                  <p>• <strong>Night:</strong> ${diet.foodsEaten.night}</p>
+                </div>
+              ` : ''}
+              ${diet.notes ? `<p class="text-xs text-slate-400 italic">Notes: "${diet.notes}"</p>` : ''}
+            </div>
+          `;
+        }
+
+        if (workout) {
+          html += `
+            <div class="bg-slate-800/50 border border-slate-700 p-4 rounded-xl space-y-2">
+              <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                <h4 class="font-bold text-indigo-400 flex items-center space-x-2"><i data-lucide="activity" class="w-4 h-4"></i><span>Workout Summary</span></h4>
+                <span class="text-xs text-slate-400">Logged at ${workout.timestamp || 'N/A'}</span>
+              </div>
+              <p class="text-xs font-semibold text-slate-200 mt-1">${workout.dayType}</p>
+              <div class="space-y-1 pt-1">
+                ${workout.completedExercises.map(ex => `
+                  <div class="text-xs bg-slate-900/60 p-2 rounded flex justify-between">
+                    <span class="text-slate-300">${ex.name}</span>
+                    <span class="text-indigo-300 font-semibold">${ex.weight}</span>
+                  </div>
+                `).join('')}
+              </div>
+              ${workout.cardioDetails ? `<div class="mt-2 text-xs bg-amber-950/30 border border-amber-800/40 p-2 rounded text-amber-200"><strong>Cardio / Sports:</strong> ${workout.cardioDetails}</div>` : ''}
+              <p class="text-xs text-slate-300 mt-2"><strong>Estimated Burn:</strong> ~${workout.estimatedBurn} kcal</p>
+            </div>
+          `;
+        }
+
+        container.innerHTML = html;
+      }
+
+      openModal('calendarDetailsModal');
+      lucide.createIcons();
+    }
+
+    window.onload = async function() {
+      await initDatabase();
+      await loadAppData();
+      switchWorkoutDay('dayA');
+      lucide.createIcons();
+    };
+  </script>
+</body>
+</html>

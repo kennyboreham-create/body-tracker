@@ -1,0 +1,32 @@
+{
+  "dayA": {
+    "title": "Day A: Lower Body & Upper Push Focus",
+    "exercises": [
+      { "id": "a1", "name": "Barbell Goblet", "sets": "4 Sets × 6-8 Reps", "estBurn": 180 },
+      { "id": "a2", "name": "Decline Push-Ups", "sets": "3 Sets × 8-10 Reps", "estBurn": 110 },
+      { "id": "a3", "name": "Rows with circle band", "sets": "3 Sets × 10 Reps", "estBurn": 100 },
+      { "id": "a4", "name": "Romanian Deadlifts (RDLs)", "sets": "3 Sets × 8-10 Reps", "estBurn": 140 },
+      { "id": "a5", "name": "Pallof Press / Ab Wheel Rollouts", "sets": "3 Sets × 12 Reps", "estBurn": 60 }
+    ]
+  },
+  "dayB": {
+    "title": "Day B: Pull Focus & Single-Leg Stability",
+    "exercises": [
+      { "id": "b1", "name": "Hello", "sets": "3 Sets × 5 Reps", "estBurn": 200 },
+      { "id": "b2", "name": "Overhead Dumbbell Press", "sets": "3 Sets × 8-10 Reps", "estBurn": 100 },
+      { "id": "b3", "name": "Pull-ups / Lat Pulldowns", "sets": "4 Sets × 8-10 Reps", "estBurn": 120 },
+      { "id": "b4", "name": "Bulgarian Split Squats", "sets": "3 Sets × 8-10 Reps/leg", "estBurn": 150 },
+      { "id": "b5", "name": "Hanging Leg Raises / Woodchoppers", "sets": "3 Sets × 12-15 Reps", "estBurn": 60 }
+    ]
+  },
+  "dayC": {
+    "title": "Day C: Hypertrophy & Rotational Power",
+    "exercises": [
+      { "id": "c1", "name": "Flat Dumbbell Bench Press", "sets": "4 Sets × 8-10 Reps", "estBurn": 120 },
+      { "id": "c2", "name": "Cable Rows / T-Bar Rows", "sets": "4 Sets × 10-12 Reps", "estBurn": 110 },
+      { "id": "c3", "name": "Dumbbell Walking Lunges", "sets": "3 Sets × 10 steps/leg", "estBurn": 160 },
+      { "id": "c4", "name": "Face Pulls (Shoulder Health)", "sets": "3 Sets × 15 Reps", "estBurn": 50 },
+      { "id": "c5", "name": "Hammer Curls & Tricep Pushdowns", "sets": "3 Supersets × 12 Reps", "estBurn": 90 }
+    ]
+  }
+}
