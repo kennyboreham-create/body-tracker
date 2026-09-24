@@ -36,12 +36,58 @@
       background-color: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(4px);
     }
+    /* Hide the tracker until a valid session exists; keep the login screen available. */
+    html.needs-login body > header,
+    html.needs-login body > main,
+    html.needs-login body > div:not(#loginScreen),
+    html.booting body > header,
+    html.booting body > main,
+    html.booting body > div:not(#loginScreen) {
+      display: none !important;
+    }
+    html:not(.needs-login) #loginScreen {
+      display: none !important;
+    }
   </style>
+  <script>
+    (function () {
+      try {
+        var raw = localStorage.getItem('bodytracker_session');
+        var session = raw ? JSON.parse(raw) : null;
+        if (session && (session.profile === 'dad' || session.profile === 'son')) {
+          document.documentElement.setAttribute('data-profile', session.profile);
+          document.documentElement.classList.add('booting');
+        } else {
+          document.documentElement.classList.add('needs-login');
+        }
+      } catch (e) {
+        document.documentElement.classList.add('needs-login');
+      }
+    })();
+  </script>
 </head>
 <body class="h-full flex flex-col overflow-x-hidden bg-slate-900 text-slate-100">
 
+  <div id="loginScreen" class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950">
+    <form id="loginForm" onsubmit="handleLogin(event)" class="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl">
+      <div class="flex items-center space-x-3 mb-5">
+        <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-600/30">
+          <i data-lucide="dumbbell" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h2 class="font-bold text-lg leading-tight text-white">240lb Recomp Portal</h2>
+          <p class="text-xs text-slate-400">Enter your password to unlock your profile</p>
+        </div>
+      </div>
+      <label for="loginPassword" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Password</label>
+      <input id="loginPassword" name="password" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500" placeholder="Password">
+      <p id="loginError" role="alert" class="hidden text-sm text-rose-400 mt-3">Incorrect password.</p>
+      <button type="submit" class="mt-4 w-full px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-md shadow-indigo-600/20 transition-all">Unlock</button>
+    </form>
+  </div>
+
   <header class="border-b border-slate-800 bg-slate-950/80 sticky top-0 z-30 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-2 flex items-center justify-between gap-3">
       <div class="flex items-center space-x-3">
         <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-600/30">
           <i data-lucide="dumbbell" class="w-6 h-6"></i>
@@ -52,10 +98,14 @@
         </div>
       </div>
       
-      <!-- Database Status Badge -->
-      <div class="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 text-xs text-slate-300">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span id="appDataStatus">Loading data...</span>
+      <div class="flex items-center gap-2">
+        <span id="activeProfileLabel" class="px-3 py-1.5 rounded-full border border-indigo-800/60 bg-indigo-950/40 text-xs font-semibold text-indigo-200">Kenny</span>
+        <button type="button" onclick="logout()" class="px-3 py-1.5 rounded-full border border-slate-600 bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-slate-100 transition-all">Logout</button>
+        <!-- Database Status Badge -->
+        <div class="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 text-xs text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="appDataStatus">Loading data...</span>
+        </div>
       </div>
     </div>
 
@@ -107,8 +157,8 @@
         </div>
         <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 text-center">
           <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Daily Protein</p>
-          <p class="text-2xl sm:text-3xl font-extrabold text-indigo-400 mt-1">180 - 200g</p>
-          <p class="text-xs text-slate-400 mt-1">0.8 - 0.9g per lb Target</p>
+          <p id="proteinTargetValue" class="text-2xl sm:text-3xl font-extrabold text-indigo-400 mt-1">180 - 200g</p>
+          <p id="proteinTargetNote" class="text-xs text-slate-400 mt-1">0.8 - 0.9g per lb Target</p>
         </div>
         <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 text-center">
           <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Daily Carbohydrates</p>
@@ -129,7 +179,7 @@
             <i data-lucide="zap" class="w-5 h-5"></i>
           </div>
           <h3 class="font-bold text-slate-100 text-lg">1. Caloric Deficit with High Protein</h3>
-          <p class="text-slate-300 text-sm mt-2 leading-relaxed">
+          <p id="proteinStrategyBlurb" class="text-slate-300 text-sm mt-2 leading-relaxed">
             Fat loss requires burning more calories than you consume. Keeping protein consistently around 180–200g ensures body fat loss rather than muscle degradation.
           </p>
         </div>
@@ -197,9 +247,16 @@
             </div>
           </div>
           <div class="h-8 w-px bg-slate-800"></div>
-          <div>
+          <div class="min-w-[8.5rem]">
             <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Est. Protein</p>
-            <span id="liveProteinDisplay" class="text-lg font-bold text-indigo-400">0g</span>
+            <div class="flex items-baseline space-x-1">
+              <span id="liveProteinDisplay" class="text-lg font-bold text-indigo-400">0g</span>
+              <span id="liveProteinOf" class="text-xs font-semibold text-slate-400">of 180 - 200g</span>
+            </div>
+            <div class="mt-1 h-1.5 w-full bg-slate-800 rounded-full overflow-hidden" aria-hidden="true">
+              <div id="proteinProgressBar" class="h-full bg-indigo-500 rounded-full" style="width:0%"></div>
+            </div>
+            <p id="proteinRemainingText" class="text-[10px] text-slate-400 mt-1">180g remaining</p>
           </div>
           <button onclick="resetDietForm()" class="ml-2 p-2 hover:bg-slate-800 text-rose-400 rounded-lg transition-all" title="Clear Draft">
             <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
@@ -698,7 +755,192 @@
 
   <script>
     /* ==========================================================================
-       DATA + LOCAL LOGS (sql.js app.db / JSON fallback + IndexedDB logs)
+       PROFILES + LOGIN (client-side gate; static GitHub Pages)
+       ========================================================================== */
+    const SESSION_KEY = 'bodytracker_session';
+    const LEGACY_DRAFT_KEY = 'daily_diet_draft_240lb_v2';
+    const PROFILES = {
+      dad: {
+        id: 'dad',
+        label: 'Kenny',
+        password: 'Hx9kP2mQ7w',
+        proteinValue: '180 - 200g',
+        proteinNote: '0.8 - 0.9g per lb Target',
+        proteinOf: 'of 180 - 200g',
+        proteinMin: 180,
+        proteinMax: 200,
+        proteinMode: 'range',
+        strategy: 'Fat loss requires burning more calories than you consume. Keeping protein consistently around 180–200g ensures body fat loss rather than muscle degradation.'
+      },
+      son: {
+        id: 'son',
+        label: 'Son',
+        password: 'Jv4nR8tL3c',
+        proteinValue: '75g',
+        proteinNote: '75 g / day target',
+        proteinOf: 'of 75g',
+        proteinMin: 75,
+        proteinMax: 75,
+        proteinMode: 'fixed',
+        strategy: 'Fat loss requires burning more calories than you consume. Keeping protein consistently around 75g per day ensures body fat loss rather than muscle degradation.'
+      }
+    };
+
+    let activeProfile = null;
+
+    function currentProfile() {
+      return PROFILES[activeProfile] || PROFILES.dad;
+    }
+
+    function readSession() {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return null;
+        const session = JSON.parse(raw);
+        if (session && PROFILES[session.profile]) return session;
+      } catch (err) {
+        console.warn('Ignoring unreadable session', err);
+      }
+      return null;
+    }
+
+    function profileDbName() {
+      return activeProfile === 'son' ? 'BodyRecompDB_240lb_son' : 'BodyRecompDB_240lb';
+    }
+
+    function draftStorageKey() {
+      return `${activeProfile || 'dad'}_daily_diet_draft_240lb_v2`;
+    }
+
+    function logStorageKey(storeName, dateKey) {
+      return `${activeProfile || 'dad'}_${storeName}_${dateKey}`;
+    }
+
+    function applyProfileTargets() {
+      const profile = currentProfile();
+      const value = document.getElementById('proteinTargetValue');
+      const note = document.getElementById('proteinTargetNote');
+      const blurb = document.getElementById('proteinStrategyBlurb');
+      const badge = document.getElementById('activeProfileLabel');
+      if (value) value.textContent = profile.proteinValue;
+      if (note) note.textContent = profile.proteinNote;
+      if (blurb) blurb.textContent = profile.strategy;
+      if (badge) badge.textContent = profile.label;
+      updateProteinProgress(0);
+    }
+
+    function proteinStatus(total) {
+      const profile = currentProfile();
+      const eaten = Math.max(0, Math.round(Number(total) || 0));
+      if (profile.proteinMode === 'fixed') {
+        const target = profile.proteinMin;
+        const remaining = Math.max(0, target - eaten);
+        const pct = target > 0 ? Math.min(100, Math.round((eaten / target) * 100)) : 0;
+        return {
+          ofText: profile.proteinOf,
+          remainingText: remaining === 0 ? `${target}g target met` : `${remaining}g remaining`,
+          pct
+        };
+      }
+      const pct = profile.proteinMin > 0 ? Math.min(100, Math.round((eaten / profile.proteinMin) * 100)) : 0;
+      let remainingText;
+      if (eaten < profile.proteinMin) remainingText = `${profile.proteinMin - eaten}g remaining`;
+      else if (eaten <= profile.proteinMax) remainingText = `In ${profile.proteinValue} target`;
+      else remainingText = `Above ${profile.proteinValue} target`;
+      return { ofText: profile.proteinOf, remainingText, pct };
+    }
+
+    function updateProteinProgress(totalProtein) {
+      const status = proteinStatus(totalProtein);
+      const ofEl = document.getElementById('liveProteinOf');
+      const remEl = document.getElementById('proteinRemainingText');
+      const barEl = document.getElementById('proteinProgressBar');
+      if (ofEl) ofEl.textContent = status.ofText;
+      if (remEl) remEl.textContent = status.remainingText;
+      if (barEl) barEl.style.width = `${status.pct}%`;
+    }
+
+    function migrateLegacyDraft() {
+      if (activeProfile !== 'dad') return;
+      if (localStorage.getItem('dad_draft_migrated') === '1') return;
+      const nextKey = draftStorageKey();
+      if (!localStorage.getItem(nextKey)) {
+        const legacy = localStorage.getItem(LEGACY_DRAFT_KEY);
+        if (legacy) localStorage.setItem(nextKey, legacy);
+      }
+      localStorage.setItem('dad_draft_migrated', '1');
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const input = document.getElementById('loginPassword');
+      const error = document.getElementById('loginError');
+      const value = input.value;
+      const match = Object.values(PROFILES).find((profile) => profile.password === value);
+      if (!match) {
+        input.value = '';
+        error.textContent = 'Incorrect password.';
+        error.classList.remove('hidden');
+        input.focus();
+        return;
+      }
+      error.classList.add('hidden');
+      input.value = '';
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ profile: match.id }));
+      enterApp(match.id);
+    }
+
+    function logout() {
+      localStorage.removeItem(SESSION_KEY);
+      activeProfile = null;
+      if (dbInstance) {
+        dbInstance.close();
+        dbInstance = null;
+      }
+      activeFoodSelections = { morning: new Set(), afternoon: new Set(), night: new Set() };
+      const form = document.getElementById('dietForm');
+      if (form) form.reset();
+      const input = document.getElementById('loginPassword');
+      const error = document.getElementById('loginError');
+      if (input) input.value = '';
+      if (error) error.classList.add('hidden');
+      document.documentElement.removeAttribute('data-profile');
+      document.documentElement.classList.remove('booting');
+      document.documentElement.classList.add('needs-login');
+      if (input) input.focus();
+    }
+
+    async function reopenProfileDatabase() {
+      if (dbInstance) {
+        dbInstance.close();
+        dbInstance = null;
+      }
+      await initDatabase();
+    }
+
+    async function enterApp(profileId) {
+      activeProfile = profileId;
+      try {
+        applyProfileTargets();
+        document.documentElement.setAttribute('data-profile', profileId);
+        document.documentElement.classList.remove('needs-login', 'booting');
+        migrateLegacyDraft();
+        await reopenProfileDatabase();
+        await loadAppData();
+        switchWorkoutDay('dayA');
+        try {
+          await renderCalendar();
+        } catch (calErr) {
+          console.warn('Calendar render skipped', calErr);
+        }
+      } finally {
+        document.documentElement.classList.remove('needs-login', 'booting');
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    /* ==========================================================================
+       DATA + LOCAL LOGS (sql.js app.db / JSON fallback + profile-scoped logs)
        ========================================================================== */
     const DB_NAME = 'BodyRecompDB_240lb';
     const DB_VERSION = 1;
@@ -922,7 +1164,7 @@ function initDatabase() {
           return;
         }
 
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        const request = indexedDB.open(profileDbName(), DB_VERSION);
 
         request.onupgradeneeded = (e) => {
           const db = e.target.result;
@@ -946,57 +1188,82 @@ function initDatabase() {
       });
     }
 
-    async function saveToDB(storeName, data) {
-      if (dbInstance) {
-        return new Promise((resolve) => {
-          const tx = dbInstance.transaction(storeName, 'readwrite');
-          const store = tx.objectStore(storeName);
-          store.put(data);
-          tx.oncomplete = () => resolve(true);
-          tx.onerror = () => resolve(false);
-        });
-      } else {
-        const key = `${storeName}_${data.date}`;
-        localStorage.setItem(key, JSON.stringify(data));
-        return true;
+    function readLocalLog(storeName, dateKey) {
+      const primary = localStorage.getItem(logStorageKey(storeName, dateKey));
+      if (primary) return JSON.parse(primary);
+      if (activeProfile === 'dad') {
+        const legacy = localStorage.getItem(`${storeName}_${dateKey}`);
+        if (legacy) return JSON.parse(legacy);
       }
+      return null;
+    }
+
+    function readAllLocalLogs(storeName) {
+      const prefix = `${activeProfile || 'dad'}_${storeName}_`;
+      const legacyPrefix = `${storeName}_`;
+      const results = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        const isProfileKey = key.startsWith(prefix);
+        const isLegacyDadKey = activeProfile === 'dad'
+          && key.startsWith(legacyPrefix)
+          && !key.startsWith('dad_')
+          && !key.startsWith('son_');
+        if (!isProfileKey && !isLegacyDadKey) continue;
+        try {
+          results.push(JSON.parse(localStorage.getItem(key)));
+        } catch (err) {
+          console.warn('Skipping unreadable log', key, err);
+        }
+      }
+      return results;
+    }
+
+    async function saveToDB(storeName, data) {
+      const record = Object.assign({}, data, { profile: activeProfile });
+      localStorage.setItem(logStorageKey(storeName, data.date), JSON.stringify(record));
+      if (!dbInstance) return true;
+      return new Promise((resolve) => {
+        const tx = dbInstance.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        store.put(record);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(true);
+      });
     }
 
     async function getFromDB(storeName, dateKey) {
-      if (dbInstance) {
-        return new Promise((resolve) => {
-          const tx = dbInstance.transaction(storeName, 'readonly');
-          const store = tx.objectStore(storeName);
-          const request = store.get(dateKey);
-          request.onsuccess = () => resolve(request.result || null);
-          request.onerror = () => resolve(null);
-        });
-      } else {
-        const key = `${storeName}_${dateKey}`;
-        const data = localStorage.getItem(key);
-        return data ? JSON.parse(data) : null;
-      }
+      const local = readLocalLog(storeName, dateKey);
+      if (local) return local;
+      if (!dbInstance) return null;
+      return new Promise((resolve) => {
+        const tx = dbInstance.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const request = store.get(dateKey);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => resolve(null);
+      });
     }
 
     async function getAllFromDB(storeName) {
+      const merged = new Map();
       if (dbInstance) {
-        return new Promise((resolve) => {
+        const idbRows = await new Promise((resolve) => {
           const tx = dbInstance.transaction(storeName, 'readonly');
           const store = tx.objectStore(storeName);
           const request = store.getAll();
           request.onsuccess = () => resolve(request.result || []);
           request.onerror = () => resolve([]);
         });
-      } else {
-        const results = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key.startsWith(`${storeName}_`)) {
-            results.push(JSON.parse(localStorage.getItem(key)));
-          }
-        }
-        return results;
+        idbRows.forEach((row) => {
+          if (row && row.date) merged.set(row.date, row);
+        });
       }
+      readAllLocalLogs(storeName).forEach((row) => {
+        if (row && row.date) merged.set(row.date, row);
+      });
+      return Array.from(merged.values());
     }
 
     /* ==========================================================================
@@ -1035,7 +1302,9 @@ function initDatabase() {
     /* ==========================================================================
        MACRO SELECTION MODAL & DIET FOOD RENDERER
        ========================================================================== */
-    const DRAFT_STORAGE_KEY = 'daily_diet_draft_240lb_v2';
+    function currentDraftKey() {
+      return draftStorageKey();
+    }
     const MEAL_TIMES = ['morning', 'afternoon', 'night'];
 
     function openFoodCategoryModal(category, mealTime) {
@@ -1194,6 +1463,7 @@ function initDatabase() {
 
       document.getElementById('liveCalorieDisplay').innerText = Math.round(totalCalories);
       document.getElementById('liveProteinDisplay').innerText = `${Math.round(totalProtein)}g`;
+      updateProteinProgress(totalProtein);
 
       return {
         totalCalories: Math.round(totalCalories),
@@ -1233,11 +1503,16 @@ function initDatabase() {
         draft.others[`${time}_other_prot`] = document.getElementById(`${time}_other_prot`)?.value || '';
       });
 
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+      localStorage.setItem(currentDraftKey(), JSON.stringify(draft));
     }
 
     function loadDietDraft() {
-      const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+      activeFoodSelections = {
+        morning: new Set(),
+        afternoon: new Set(),
+        night: new Set()
+      };
+      const raw = localStorage.getItem(currentDraftKey());
       if (!raw) {
         // Default initial items
         activeFoodSelections.morning.add('proteins_p3');
@@ -1293,7 +1568,7 @@ function initDatabase() {
 
     function resetDietForm() {
       document.getElementById('dietForm').reset();
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(currentDraftKey());
       activeFoodSelections = { morning: new Set(), afternoon: new Set(), night: new Set() };
       renderFoodSections();
       calculateRealtimeCalories();
@@ -1604,10 +1879,14 @@ function initDatabase() {
     }
 
     window.onload = async function() {
-      await initDatabase();
-      await loadAppData();
-      switchWorkoutDay('dayA');
       lucide.createIcons();
+      const session = readSession();
+      if (session) {
+        await enterApp(session.profile);
+      } else {
+        const input = document.getElementById('loginPassword');
+        if (input) input.focus();
+      }
     };
   </script>
 </body>
