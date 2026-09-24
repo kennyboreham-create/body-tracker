@@ -500,6 +500,13 @@
       "portion": "1 tbsp",
       "calories": 60,
       "protein": 0
+    },
+    {
+      "id": "c21",
+      "name": "White Rice",
+      "portion": "1 cup cooked",
+      "calories": 205,
+      "protein": 4
     }
   ],
   "fats": [
@@ -572,6 +579,20 @@
       "portion": "1/4 cup",
       "calories": 100,
       "protein": 1
+    },
+    {
+      "id": "f11",
+      "name": "Fish Oil",
+      "portion": "1 softgel (1000 mg)",
+      "calories": 10,
+      "protein": 0
+    },
+    {
+      "id": "f12",
+      "name": "Creatine Monohydrate",
+      "portion": "5 g scoop",
+      "calories": 0,
+      "protein": 0
     }
   ]
 }
