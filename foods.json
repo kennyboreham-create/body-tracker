@@ -1,80 +1,577 @@
 {
   "proteins": [
-    { "id": "p1", "name": "Chicken Breast", "portion": "6 oz", "calories": 280, "protein": 48 },
-    { "id": "p2", "name": "Extra Lean Ground Turkey (93/7)", "portion": "6 oz", "calories": 250, "protein": 42 },
-    { "id": "p3", "name": "Whey Protein Isolate", "portion": "1 scoop", "calories": 120, "protein": 25 },
-    { "id": "p4", "name": "0% Plain Greek Yogurt", "portion": "1 cup", "calories": 130, "protein": 24 },
-    { "id": "p5", "name": "Egg Whites", "portion": "1 cup", "calories": 120, "protein": 26 },
-    { "id": "p6", "name": "Canned Tuna in Water", "portion": "1 can (5 oz)", "calories": 150, "protein": 32 },
-    { "id": "p7", "name": "Sirloin Steak (Trimmed)", "portion": "6 oz", "calories": 310, "protein": 46 },
-    { "id": "p8", "name": "Atlantic Salmon Fillet", "portion": "6 oz", "calories": 350, "protein": 38 },
-    { "id": "p9", "name": "Low Fat Cottage Cheese (2%)", "portion": "1 cup", "calories": 180, "protein": 28 },
-    { "id": "p10", "name": "Pork Tenderloin", "portion": "6 oz", "calories": 240, "protein": 44 },
-    { "id": "p11", "name": "Whole Eggs", "portion": "3 large", "calories": 210, "protein": 18 },
-    { "id": "p12", "name": "Lean Deli Turkey Breast", "portion": "4 oz", "calories": 120, "protein": 22 },
-    { "id": "p13", "name": "Extra Lean Ground Beef (90/10)", "portion": "6 oz", "calories": 330, "protein": 42 },
-    { "id": "p14", "name": "Cod or Halibut Fillet", "portion": "6 oz", "calories": 180, "protein": 36 },
-    { "id": "p15", "name": "Cooked Shrimp", "portion": "6 oz", "calories": 170, "protein": 40 },
-    { "id": "p16", "name": "Extra Firm Tofu", "portion": "8 oz", "calories": 180, "protein": 20 },
-    { "id": "p17", "name": "Micellar Casein Protein", "portion": "1 scoop", "calories": 120, "protein": 24 },
-    { "id": "p18", "name": "Fairlife Ultra-Filtered Milk", "portion": "1 cup", "calories": 120, "protein": 13 },
-    { "id": "p19", "name": "Edamame Beans", "portion": "1 cup", "calories": 180, "protein": 18 },
-    { "id": "p20", "name": "Beef Jerky / Biltong", "portion": "2 oz", "calories": 160, "protein": 28 }
+    {
+      "id": "p1",
+      "name": "Chicken Breast",
+      "portion": "6 oz",
+      "calories": 280,
+      "protein": 48
+    },
+    {
+      "id": "p2",
+      "name": "Extra Lean Ground Turkey (93/7)",
+      "portion": "6 oz",
+      "calories": 250,
+      "protein": 42
+    },
+    {
+      "id": "p3",
+      "name": "Whey Protein Isolate",
+      "portion": "1 scoop",
+      "calories": 120,
+      "protein": 25
+    },
+    {
+      "id": "p4",
+      "name": "0% Plain Greek Yogurt",
+      "portion": "1 cup",
+      "calories": 130,
+      "protein": 24
+    },
+    {
+      "id": "p5",
+      "name": "Egg Whites",
+      "portion": "1 cup",
+      "calories": 120,
+      "protein": 26
+    },
+    {
+      "id": "p6",
+      "name": "Canned Tuna in Water",
+      "portion": "1 can (5 oz)",
+      "calories": 150,
+      "protein": 32
+    },
+    {
+      "id": "p7",
+      "name": "Sirloin Steak (Trimmed)",
+      "portion": "6 oz",
+      "calories": 310,
+      "protein": 46
+    },
+    {
+      "id": "p8",
+      "name": "Atlantic Salmon Fillet",
+      "portion": "6 oz",
+      "calories": 350,
+      "protein": 38
+    },
+    {
+      "id": "p9",
+      "name": "Low Fat Cottage Cheese (2%)",
+      "portion": "1 cup",
+      "calories": 180,
+      "protein": 28
+    },
+    {
+      "id": "p10",
+      "name": "Pork Tenderloin",
+      "portion": "6 oz",
+      "calories": 240,
+      "protein": 44
+    },
+    {
+      "id": "p11",
+      "name": "Whole Eggs",
+      "portion": "3 large",
+      "calories": 210,
+      "protein": 18
+    },
+    {
+      "id": "p12",
+      "name": "Lean Deli Turkey Breast",
+      "portion": "4 oz",
+      "calories": 120,
+      "protein": 22
+    },
+    {
+      "id": "p13",
+      "name": "Extra Lean Ground Beef (90/10)",
+      "portion": "6 oz",
+      "calories": 330,
+      "protein": 42
+    },
+    {
+      "id": "p14",
+      "name": "Cod or Halibut Fillet",
+      "portion": "6 oz",
+      "calories": 180,
+      "protein": 36
+    },
+    {
+      "id": "p15",
+      "name": "Cooked Shrimp",
+      "portion": "6 oz",
+      "calories": 170,
+      "protein": 40
+    },
+    {
+      "id": "p16",
+      "name": "Extra Firm Tofu",
+      "portion": "8 oz",
+      "calories": 180,
+      "protein": 20
+    },
+    {
+      "id": "p17",
+      "name": "Micellar Casein Protein",
+      "portion": "1 scoop",
+      "calories": 120,
+      "protein": 24
+    },
+    {
+      "id": "p18",
+      "name": "Fairlife Ultra-Filtered Milk",
+      "portion": "1 cup",
+      "calories": 120,
+      "protein": 13
+    },
+    {
+      "id": "p19",
+      "name": "Edamame Beans",
+      "portion": "1 cup",
+      "calories": 180,
+      "protein": 18
+    },
+    {
+      "id": "p20",
+      "name": "Beef Jerky / Biltong",
+      "portion": "2 oz",
+      "calories": 160,
+      "protein": 28
+    },
+    {
+      "id": "p21",
+      "name": "Broccoli",
+      "portion": "1 cup cooked",
+      "calories": 55,
+      "protein": 4
+    },
+    {
+      "id": "p22",
+      "name": "Green Peas",
+      "portion": "1 cup cooked",
+      "calories": 125,
+      "protein": 8
+    },
+    {
+      "id": "p23",
+      "name": "Brussels Sprouts",
+      "portion": "1 cup cooked",
+      "calories": 55,
+      "protein": 4
+    },
+    {
+      "id": "p24",
+      "name": "Asparagus",
+      "portion": "1 cup cooked",
+      "calories": 40,
+      "protein": 4
+    },
+    {
+      "id": "p25",
+      "name": "Spinach",
+      "portion": "1 cup cooked",
+      "calories": 40,
+      "protein": 5
+    },
+    {
+      "id": "p26",
+      "name": "Green Beans",
+      "portion": "1 cup cooked",
+      "calories": 45,
+      "protein": 2
+    },
+    {
+      "id": "p27",
+      "name": "Lima Beans",
+      "portion": "1/2 cup cooked",
+      "calories": 110,
+      "protein": 7
+    },
+    {
+      "id": "p28",
+      "name": "Snap Peas",
+      "portion": "1 cup",
+      "calories": 40,
+      "protein": 3
+    },
+    {
+      "id": "p29",
+      "name": "Kale",
+      "portion": "1 cup cooked",
+      "calories": 45,
+      "protein": 4
+    },
+    {
+      "id": "p30",
+      "name": "Cauliflower",
+      "portion": "1 cup cooked",
+      "calories": 30,
+      "protein": 2
+    },
+    {
+      "id": "p31",
+      "name": "Artichoke Hearts",
+      "portion": "1/2 cup",
+      "calories": 45,
+      "protein": 3
+    }
   ],
   "veggies": [
-    { "id": "v1", "name": "Steamed Broccoli", "portion": "1 cup", "calories": 45, "protein": 3 },
-    { "id": "v2", "name": "Baby Spinach", "portion": "2 cups", "calories": 20, "protein": 2 },
-    { "id": "v3", "name": "Roasted Asparagus", "portion": "6 spears", "calories": 30, "protein": 3 },
-    { "id": "v4", "name": "Zucchini / Squash", "portion": "1 cup", "calories": 20, "protein": 1 },
-    { "id": "v5", "name": "Green Beans", "portion": "1 cup", "calories": 35, "protein": 2 },
-    { "id": "v6", "name": "Cauliflower", "portion": "1 cup", "calories": 25, "protein": 2 },
-    { "id": "v7", "name": "Bell Peppers", "portion": "1 medium", "calories": 30, "protein": 1 },
-    { "id": "v8", "name": "Cucumber Slices", "portion": "1 cup", "calories": 15, "protein": 1 },
-    { "id": "v9", "name": "Brussels Sprouts", "portion": "1 cup", "calories": 55, "protein": 4 },
-    { "id": "v10", "name": "Kale Salad", "portion": "2 cups", "calories": 35, "protein": 3 },
-    { "id": "v11", "name": "Celery Stalks", "portion": "3 medium", "calories": 15, "protein": 1 },
-    { "id": "v12", "name": "Carrots", "portion": "1 medium", "calories": 25, "protein": 1 },
-    { "id": "v13", "name": "Sliced Mushrooms", "portion": "1 cup", "calories": 20, "protein": 2 },
-    { "id": "v14", "name": "Cherry Tomatoes", "portion": "1 cup", "calories": 30, "protein": 1 },
-    { "id": "v15", "name": "Cabbage (Coleslaw mix)", "portion": "1 cup", "calories": 20, "protein": 1 },
-    { "id": "v16", "name": "Mixed Garden Greens", "portion": "2 cups", "calories": 15, "protein": 1 },
-    { "id": "v17", "name": "Snap Peas", "portion": "1 cup", "calories": 40, "protein": 2 },
-    { "id": "v18", "name": "Eggplant", "portion": "1 cup", "calories": 35, "protein": 1 },
-    { "id": "v19", "name": "Artichoke Hearts", "portion": "1/2 cup", "calories": 45, "protein": 2 },
-    { "id": "v20", "name": "Kimchi / Sauerkraut", "portion": "1/2 cup", "calories": 20, "protein": 1 }
+    {
+      "id": "v1",
+      "name": "Steamed Broccoli",
+      "portion": "1 cup",
+      "calories": 45,
+      "protein": 3
+    },
+    {
+      "id": "v2",
+      "name": "Baby Spinach",
+      "portion": "2 cups",
+      "calories": 20,
+      "protein": 2
+    },
+    {
+      "id": "v3",
+      "name": "Roasted Asparagus",
+      "portion": "6 spears",
+      "calories": 30,
+      "protein": 3
+    },
+    {
+      "id": "v4",
+      "name": "Zucchini / Squash",
+      "portion": "1 cup",
+      "calories": 20,
+      "protein": 1
+    },
+    {
+      "id": "v5",
+      "name": "Green Beans",
+      "portion": "1 cup",
+      "calories": 35,
+      "protein": 2
+    },
+    {
+      "id": "v6",
+      "name": "Cauliflower",
+      "portion": "1 cup",
+      "calories": 25,
+      "protein": 2
+    },
+    {
+      "id": "v7",
+      "name": "Bell Peppers",
+      "portion": "1 medium",
+      "calories": 30,
+      "protein": 1
+    },
+    {
+      "id": "v8",
+      "name": "Cucumber Slices",
+      "portion": "1 cup",
+      "calories": 15,
+      "protein": 1
+    },
+    {
+      "id": "v9",
+      "name": "Brussels Sprouts",
+      "portion": "1 cup",
+      "calories": 55,
+      "protein": 4
+    },
+    {
+      "id": "v10",
+      "name": "Kale Salad",
+      "portion": "2 cups",
+      "calories": 35,
+      "protein": 3
+    },
+    {
+      "id": "v11",
+      "name": "Celery Stalks",
+      "portion": "3 medium",
+      "calories": 15,
+      "protein": 1
+    },
+    {
+      "id": "v12",
+      "name": "Carrots",
+      "portion": "1 medium",
+      "calories": 25,
+      "protein": 1
+    },
+    {
+      "id": "v13",
+      "name": "Sliced Mushrooms",
+      "portion": "1 cup",
+      "calories": 20,
+      "protein": 2
+    },
+    {
+      "id": "v14",
+      "name": "Cherry Tomatoes",
+      "portion": "1 cup",
+      "calories": 30,
+      "protein": 1
+    },
+    {
+      "id": "v15",
+      "name": "Cabbage (Coleslaw mix)",
+      "portion": "1 cup",
+      "calories": 20,
+      "protein": 1
+    },
+    {
+      "id": "v16",
+      "name": "Mixed Garden Greens",
+      "portion": "2 cups",
+      "calories": 15,
+      "protein": 1
+    },
+    {
+      "id": "v17",
+      "name": "Snap Peas",
+      "portion": "1 cup",
+      "calories": 40,
+      "protein": 2
+    },
+    {
+      "id": "v18",
+      "name": "Eggplant",
+      "portion": "1 cup",
+      "calories": 35,
+      "protein": 1
+    },
+    {
+      "id": "v19",
+      "name": "Artichoke Hearts",
+      "portion": "1/2 cup",
+      "calories": 45,
+      "protein": 2
+    },
+    {
+      "id": "v20",
+      "name": "Kimchi / Sauerkraut",
+      "portion": "1/2 cup",
+      "calories": 20,
+      "protein": 1
+    }
   ],
   "carbs": [
-    { "id": "c1", "name": "Rolled Oats (Cooked)", "portion": "1 cup", "calories": 160, "protein": 6 },
-    { "id": "c2", "name": "Jasmine / White Rice", "portion": "1 cup cooked", "calories": 200, "protein": 4 },
-    { "id": "c3", "name": "Brown Rice", "portion": "1 cup cooked", "calories": 215, "protein": 5 },
-    { "id": "c4", "name": "Sweet Potato", "portion": "1 medium", "calories": 115, "protein": 2 },
-    { "id": "c5", "name": "Russet Baked Potato", "portion": "1 medium", "calories": 160, "protein": 4 },
-    { "id": "c6", "name": "Quinoa", "portion": "1 cup cooked", "calories": 220, "protein": 8 },
-    { "id": "c7", "name": "Whole Wheat Bread / Ezekiel", "portion": "2 slices", "calories": 160, "protein": 8 },
-    { "id": "c8", "name": "Banana", "portion": "1 medium", "calories": 105, "protein": 1 },
-    { "id": "c9", "name": "Blueberries", "portion": "1 cup", "calories": 85, "protein": 1 },
-    { "id": "c10", "name": "Apple", "portion": "1 medium", "calories": 95, "protein": 0 },
-    { "id": "c11", "name": "Whole Wheat Wrap", "portion": "1 large", "calories": 170, "protein": 6 },
-    { "id": "c12", "name": "Whole Wheat Pasta", "portion": "1 cup cooked", "calories": 180, "protein": 7 },
-    { "id": "c13", "name": "Plain Rice Cakes", "portion": "2 cakes", "calories": 70, "protein": 1 },
-    { "id": "c14", "name": "Cream of Rice", "portion": "1 cup cooked", "calories": 150, "protein": 3 },
-    { "id": "c15", "name": "Bagel (Whole Wheat)", "portion": "1 bagel", "calories": 240, "protein": 10 },
-    { "id": "c16", "name": "Black Beans", "portion": "1/2 cup", "calories": 110, "protein": 7 },
-    { "id": "c17", "name": "Chickpeas", "portion": "1/2 cup", "calories": 130, "protein": 6 },
-    { "id": "c18", "name": "Strawberries", "portion": "1.5 cups", "calories": 70, "protein": 1 },
-    { "id": "c19", "name": "Granola (Low Sugar)", "portion": "1/2 cup", "calories": 200, "protein": 5 },
-    { "id": "c20", "name": "Honey", "portion": "1 tbsp", "calories": 60, "protein": 0 }
+    {
+      "id": "c1",
+      "name": "Rolled Oats (Cooked)",
+      "portion": "1 cup",
+      "calories": 160,
+      "protein": 6
+    },
+    {
+      "id": "c2",
+      "name": "Jasmine / White Rice",
+      "portion": "1 cup cooked",
+      "calories": 200,
+      "protein": 4
+    },
+    {
+      "id": "c3",
+      "name": "Brown Rice",
+      "portion": "1 cup cooked",
+      "calories": 215,
+      "protein": 5
+    },
+    {
+      "id": "c4",
+      "name": "Sweet Potato",
+      "portion": "1 medium",
+      "calories": 115,
+      "protein": 2
+    },
+    {
+      "id": "c5",
+      "name": "Russet Baked Potato",
+      "portion": "1 medium",
+      "calories": 160,
+      "protein": 4
+    },
+    {
+      "id": "c6",
+      "name": "Quinoa",
+      "portion": "1 cup cooked",
+      "calories": 220,
+      "protein": 8
+    },
+    {
+      "id": "c7",
+      "name": "Whole Wheat Bread / Ezekiel",
+      "portion": "2 slices",
+      "calories": 160,
+      "protein": 8
+    },
+    {
+      "id": "c8",
+      "name": "Banana",
+      "portion": "1 medium",
+      "calories": 105,
+      "protein": 1
+    },
+    {
+      "id": "c9",
+      "name": "Blueberries",
+      "portion": "1 cup",
+      "calories": 85,
+      "protein": 1
+    },
+    {
+      "id": "c10",
+      "name": "Apple",
+      "portion": "1 medium",
+      "calories": 95,
+      "protein": 0
+    },
+    {
+      "id": "c11",
+      "name": "Whole Wheat Wrap",
+      "portion": "1 large",
+      "calories": 170,
+      "protein": 6
+    },
+    {
+      "id": "c12",
+      "name": "Whole Wheat Pasta",
+      "portion": "1 cup cooked",
+      "calories": 180,
+      "protein": 7
+    },
+    {
+      "id": "c13",
+      "name": "Plain Rice Cakes",
+      "portion": "2 cakes",
+      "calories": 70,
+      "protein": 1
+    },
+    {
+      "id": "c14",
+      "name": "Cream of Rice",
+      "portion": "1 cup cooked",
+      "calories": 150,
+      "protein": 3
+    },
+    {
+      "id": "c15",
+      "name": "Bagel (Whole Wheat)",
+      "portion": "1 bagel",
+      "calories": 240,
+      "protein": 10
+    },
+    {
+      "id": "c16",
+      "name": "Black Beans",
+      "portion": "1/2 cup",
+      "calories": 110,
+      "protein": 7
+    },
+    {
+      "id": "c17",
+      "name": "Chickpeas",
+      "portion": "1/2 cup",
+      "calories": 130,
+      "protein": 6
+    },
+    {
+      "id": "c18",
+      "name": "Strawberries",
+      "portion": "1.5 cups",
+      "calories": 70,
+      "protein": 1
+    },
+    {
+      "id": "c19",
+      "name": "Granola (Low Sugar)",
+      "portion": "1/2 cup",
+      "calories": 200,
+      "protein": 5
+    },
+    {
+      "id": "c20",
+      "name": "Honey",
+      "portion": "1 tbsp",
+      "calories": 60,
+      "protein": 0
+    }
   ],
   "fats": [
-    { "id": "f1", "name": "Extra Virgin Olive Oil", "portion": "1 tbsp", "calories": 120, "protein": 0 },
-    { "id": "f2", "name": "Natural Peanut Butter", "portion": "2 tbsp", "calories": 190, "protein": 8 },
-    { "id": "f3", "name": "Almonds / Mixed Nuts", "portion": "1 oz (28g)", "calories": 160, "protein": 6 },
-    { "id": "f4", "name": "Avocado", "portion": "1/2 medium", "calories": 120, "protein": 1 },
-    { "id": "f5", "name": "Avocado Oil", "portion": "1 tbsp", "calories": 120, "protein": 0 },
-    { "id": "f6", "name": "Chia Seeds", "portion": "2 tbsp", "calories": 140, "protein": 5 },
-    { "id": "f7", "name": "Flaxseeds (Ground)", "portion": "2 tbsp", "calories": 110, "protein": 4 },
-    { "id": "f8", "name": "Dark Chocolate (85%)", "portion": "1 oz", "calories": 170, "protein": 2 },
-    { "id": "f9", "name": "Real Butter / Ghee", "portion": "1 tbsp", "calories": 100, "protein": 0 },
-    { "id": "f10", "name": "Unsweetened Coconut Flakes", "portion": "1/4 cup", "calories": 100, "protein": 1 }
+    {
+      "id": "f1",
+      "name": "Extra Virgin Olive Oil",
+      "portion": "1 tbsp",
+      "calories": 120,
+      "protein": 0
+    },
+    {
+      "id": "f2",
+      "name": "Natural Peanut Butter",
+      "portion": "2 tbsp",
+      "calories": 190,
+      "protein": 8
+    },
+    {
+      "id": "f3",
+      "name": "Almonds / Mixed Nuts",
+      "portion": "1 oz (28g)",
+      "calories": 160,
+      "protein": 6
+    },
+    {
+      "id": "f4",
+      "name": "Avocado",
+      "portion": "1/2 medium",
+      "calories": 120,
+      "protein": 1
+    },
+    {
+      "id": "f5",
+      "name": "Avocado Oil",
+      "portion": "1 tbsp",
+      "calories": 120,
+      "protein": 0
+    },
+    {
+      "id": "f6",
+      "name": "Chia Seeds",
+      "portion": "2 tbsp",
+      "calories": 140,
+      "protein": 5
+    },
+    {
+      "id": "f7",
+      "name": "Flaxseeds (Ground)",
+      "portion": "2 tbsp",
+      "calories": 110,
+      "protein": 4
+    },
+    {
+      "id": "f8",
+      "name": "Dark Chocolate (85%)",
+      "portion": "1 oz",
+      "calories": 170,
+      "protein": 2
+    },
+    {
+      "id": "f9",
+      "name": "Real Butter / Ghee",
+      "portion": "1 tbsp",
+      "calories": 100,
+      "protein": 0
+    },
+    {
+      "id": "f10",
+      "name": "Unsweetened Coconut Flakes",
+      "portion": "1/4 cup",
+      "calories": 100,
+      "protein": 1
+    }
   ]
 }
