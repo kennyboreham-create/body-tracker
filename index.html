@@ -10,8 +10,6 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-  <!-- sql.js for loading data/app.db on GitHub Pages -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -101,7 +99,6 @@
       <div class="flex items-center gap-2">
         <span id="activeProfileLabel" class="px-3 py-1.5 rounded-full border border-indigo-800/60 bg-indigo-950/40 text-xs font-semibold text-indigo-200">Kenny</span>
         <button type="button" onclick="logout()" class="px-3 py-1.5 rounded-full border border-slate-600 bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-slate-100 transition-all">Logout</button>
-        <!-- Database Status Badge -->
         <div class="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 text-xs text-slate-300">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span id="appDataStatus">Loading data...</span>
@@ -448,11 +445,11 @@
         <button type="button" onclick="switchWorkoutDay('dayB')" id="btnDayB" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-slate-800 text-slate-400 hover:text-white transition-all">Day B (Pull/Single-Leg)</button>
         <button type="button" onclick="switchWorkoutDay('dayC')" id="btnDayC" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-slate-800 text-slate-400 hover:text-white transition-all">Day C (Hypertrophy/Core)</button>
       </div>
-      <div class="flex flex-wrap items-center gap-3 px-1">
-        <span id="workoutJsonStatus" class="text-xs text-slate-500">Loading workout data...</span>
-        <span id="foodJsonStatus" class="text-xs text-slate-500 hidden"></span>
-        <button type="button" onclick="document.getElementById('workoutsFileInput').click()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-600 text-slate-200 hover:bg-slate-700">Load local workouts.json</button>
-        <input type="file" id="workoutsFileInput" accept=".json,application/json" class="hidden" onchange="reloadWorkoutsFromFile(this.files[0]); this.value='';">
+      <div class="flex flex-wrap items-center gap-2 px-1">
+        <button type="button" onclick="openExerciseModal(currentWorkoutDay)" class="px-2.5 py-1.5 bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span>Add / Edit Exercises</span>
+        </button>
       </div>
 
       <!-- Workout Routine Exercises Form -->
@@ -898,6 +895,8 @@
         dbInstance = null;
       }
       activeFoodSelections = { morning: new Set(), afternoon: new Set(), night: new Set() };
+      activeExerciseSelections = { dayA: new Set(), dayB: new Set(), dayC: new Set() };
+      exerciseSelectionSaved = { dayA: false, dayB: false, dayC: false };
       const form = document.getElementById('dietForm');
       if (form) form.reset();
       const input = document.getElementById('loginPassword');
@@ -940,21 +939,33 @@
     }
 
     /* ==========================================================================
-       DATA + LOCAL LOGS (sql.js app.db / JSON fallback + profile-scoped logs)
+       DATA + LOCAL LOGS (JSON catalogs + profile-scoped logs)
        ========================================================================== */
     const DB_NAME = 'BodyRecompDB_240lb';
     const DB_VERSION = 1;
+    const WORKOUT_DAYS = ['dayA', 'dayB', 'dayC'];
     let dbInstance = null;
 
     let FOOD_DATABASE = { proteins: [], veggies: [], carbs: [], fats: [] };
     let WORKOUT_DATABASE = {};
     let TOOLTIP_DATABASE = {};
-    let SQL_DB = null;
 
     let activeFoodSelections = {
       morning: new Set(),
       afternoon: new Set(),
       night: new Set()
+    };
+
+    let activeExerciseSelections = {
+      dayA: new Set(),
+      dayB: new Set(),
+      dayC: new Set()
+    };
+
+    let exerciseSelectionSaved = {
+      dayA: false,
+      dayB: false,
+      dayC: false
     };
 
     function setAppDataStatus(msg, ok) {
@@ -972,93 +983,50 @@
       }
     }
 
-    async function initSqlJsDb() {
-      if (typeof initSqlJs !== 'function') throw new Error('sql.js not available');
-      const SQL = await initSqlJs({
-        locateFile: (file) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
-      });
-      const resp = await fetch('data/app.db?t=' + Date.now(), { cache: 'no-store' });
-      if (!resp.ok) throw new Error('app.db HTTP ' + resp.status);
-      const buf = await resp.arrayBuffer();
-      SQL_DB = new SQL.Database(new Uint8Array(buf));
-      return SQL_DB;
+    function exerciseSelectionStorageKey() {
+      return `${activeProfile || 'dad'}_active_exercise_selections`;
     }
 
-    function foodsFromSql(db) {
-      const out = { proteins: [], veggies: [], carbs: [], fats: [] };
-      const rows = db.exec('SELECT category, id, name, portion, calories, protein FROM foods ORDER BY category, id');
-      if (!rows.length) return out;
-      const cols = rows[0].columns;
-      for (const values of rows[0].values) {
-        const row = Object.fromEntries(cols.map((c, i) => [c, values[i]]));
-        const cat = row.category;
-        if (!out[cat]) out[cat] = [];
-        out[cat].push({
-          id: row.id,
-          name: row.name,
-          portion: row.portion,
-          calories: row.calories,
-          protein: row.protein
-        });
-      }
-      return out;
+    function catalogExerciseIds(dayKey) {
+      const program = WORKOUT_DATABASE[dayKey];
+      return ((program && program.exercises) || []).map((ex) => ex.id);
     }
 
-    function workoutsFromSql(db) {
-      const out = {};
-      const days = db.exec('SELECT day_key, title FROM workout_days');
-      if (!days.length) return out;
-      for (const values of days[0].values) {
-        const [day_key, title] = values;
-        out[day_key] = { title, exercises: [] };
+    function loadExerciseSelections() {
+      activeExerciseSelections = {
+        dayA: new Set(),
+        dayB: new Set(),
+        dayC: new Set()
+      };
+      exerciseSelectionSaved = { dayA: false, dayB: false, dayC: false };
+      let saved = null;
+      try {
+        const raw = localStorage.getItem(exerciseSelectionStorageKey());
+        if (raw) saved = JSON.parse(raw);
+      } catch (err) {
+        console.warn('Ignoring unreadable exercise selections', err);
       }
-      const ex = db.exec(
-        'SELECT day_key, id, name, sets, est_burn, sort_order FROM workout_exercises ORDER BY day_key, sort_order, id'
-      );
-      if (ex.length) {
-        for (const values of ex[0].values) {
-          const [day_key, id, name, sets, est_burn] = values;
-          if (!out[day_key]) out[day_key] = { title: day_key, exercises: [] };
-          out[day_key].exercises.push({ id, name, sets, estBurn: est_burn });
+      WORKOUT_DAYS.forEach((dayKey) => {
+        if (saved && Object.prototype.hasOwnProperty.call(saved, dayKey) && Array.isArray(saved[dayKey])) {
+          activeExerciseSelections[dayKey] = new Set(saved[dayKey]);
+          exerciseSelectionSaved[dayKey] = true;
+        } else {
+          activeExerciseSelections[dayKey] = new Set(catalogExerciseIds(dayKey));
         }
-      }
-      return out;
+      });
     }
 
-    function tooltipsFromSql(db) {
-      const out = {};
-      const tip = db.exec('SELECT id, name, how_to, sets, est_burn, section_key, extra_json FROM workout_tooltips');
-      if (!tip.length) return out;
-      const cols = tip[0].columns;
-      for (const values of tip[0].values) {
-        const row = Object.fromEntries(cols.map((c, i) => [c, values[i]]));
-        out[row.id] = {
-          id: row.id,
-          name: row.name,
-          how_to: row.how_to,
-          sets: row.sets,
-          estBurn: row.est_burn,
-          section_key: row.section_key,
-          extra: row.extra_json ? JSON.parse(row.extra_json) : null
-        };
-      }
-      return out;
+    function persistExerciseSelections() {
+      const payload = {};
+      WORKOUT_DAYS.forEach((dayKey) => {
+        if (exerciseSelectionSaved[dayKey]) {
+          payload[dayKey] = Array.from(activeExerciseSelections[dayKey] || []);
+        }
+      });
+      localStorage.setItem(exerciseSelectionStorageKey(), JSON.stringify(payload));
     }
 
-    async function loadFromSqlite() {
-      await initSqlJsDb();
-      FOOD_DATABASE = foodsFromSql(SQL_DB);
-      WORKOUT_DATABASE = workoutsFromSql(SQL_DB);
-      TOOLTIP_DATABASE = tooltipsFromSql(SQL_DB);
-      const foodCount = Object.values(FOOD_DATABASE).reduce((n, a) => n + (a ? a.length : 0), 0);
-      const dayCount = Object.keys(WORKOUT_DATABASE).length;
-      if (!foodCount || !dayCount) throw new Error('app.db missing expected rows');
-      setJsonLoadStatus('food', true, 'Foods from data/app.db');
-      setJsonLoadStatus('workout', true, 'Workouts from data/app.db');
-      setAppDataStatus('SQLite data ready', true);
-    }
-
-    async function loadFromJsonFallback() {
+    async function loadCatalogFromJson() {
       const foodResp = await fetch('foods.json?t=' + Date.now(), { cache: 'no-store' });
       if (!foodResp.ok) throw new Error('foods.json HTTP ' + foodResp.status);
       FOOD_DATABASE = await foodResp.json();
@@ -1067,11 +1035,11 @@
       if (!workoutResp.ok) throw new Error('workouts.json HTTP ' + workoutResp.status);
       WORKOUT_DATABASE = await workoutResp.json();
 
+      TOOLTIP_DATABASE = {};
       try {
         const tipResp = await fetch('workouttooltip.json?t=' + Date.now(), { cache: 'no-store' });
         if (tipResp.ok) {
           const tipJson = await tipResp.json();
-          TOOLTIP_DATABASE = {};
           Object.keys(tipJson).forEach((sectionKey) => {
             const section = tipJson[sectionKey];
             (section.exercises || []).forEach((ex) => {
@@ -1089,10 +1057,6 @@
       } catch (tipErr) {
         console.warn('Optional workouttooltip.json not loaded', tipErr);
       }
-
-      setJsonLoadStatus('food', true, 'Loaded from foods.json');
-      setJsonLoadStatus('workout', true, 'Loaded from workouts.json');
-      setAppDataStatus('JSON data ready', true);
     }
 
     async function loadFoodDatabase() {
@@ -1100,61 +1064,24 @@
     }
 
     async function loadWorkoutDatabase() {
+      loadExerciseSelections();
       renderWorkoutExercises();
     }
 
     async function loadAppData() {
       try {
-        await loadFromSqlite();
-      } catch (err) {
-        console.warn('SQLite data/app.db load failed; falling back to JSON.', err);
-        try {
-          await loadFromJsonFallback();
-        } catch (jsonErr) {
-          console.error('JSON fallback failed', jsonErr);
-          FOOD_DATABASE = FOOD_DATABASE && Object.keys(FOOD_DATABASE).length
-            ? FOOD_DATABASE
-            : { proteins: [], carbs: [], fats: [], veggies: [] };
-          WORKOUT_DATABASE = WORKOUT_DATABASE && Object.keys(WORKOUT_DATABASE).length
-            ? WORKOUT_DATABASE
-            : {};
-          setJsonLoadStatus('food', false, 'Food data unavailable');
-          setJsonLoadStatus('workout', false, 'Workout data unavailable');
-          setAppDataStatus('Data load failed', false);
-        }
+        await loadCatalogFromJson();
+        setAppDataStatus('foods.json & workouts.json', true);
+      } catch (jsonErr) {
+        console.error('JSON catalog load failed', jsonErr);
+        FOOD_DATABASE = { proteins: [], carbs: [], fats: [], veggies: [] };
+        WORKOUT_DATABASE = {};
+        TOOLTIP_DATABASE = {};
+        setAppDataStatus('Data load failed', false);
       }
       await loadFoodDatabase();
       await loadWorkoutDatabase();
     }
-
-    async function reloadFoodsFromFile(file) {
-      if (!file) return;
-      const data = JSON.parse(await file.text());
-      FOOD_DATABASE = data;
-      setJsonLoadStatus('food', true, 'Loaded from ' + file.name);
-      setAppDataStatus('Local foods loaded', true);
-      loadDietDraft();
-    }
-
-    async function reloadWorkoutsFromFile(file) {
-      if (!file) return;
-      const data = JSON.parse(await file.text());
-      WORKOUT_DATABASE = data;
-      setJsonLoadStatus('workout', true, 'Loaded from ' + file.name);
-      setAppDataStatus('Local workouts loaded', true);
-      renderWorkoutExercises();
-    }
-
-    function setJsonLoadStatus(kind, ok, msg) {
-      const el = document.getElementById(kind === 'workout' ? 'workoutJsonStatus' : 'foodJsonStatus');
-      if (!el) return;
-      el.textContent = msg;
-      el.className = ok
-        ? 'text-xs text-emerald-400'
-        : 'text-xs text-amber-400';
-      if (kind === 'food') el.classList.remove('hidden');
-    }
-
 
 function initDatabase() {
       return new Promise((resolve) => {
@@ -1628,6 +1555,20 @@ function initDatabase() {
        ========================================================================== */
     let currentWorkoutDay = 'dayA';
 
+    function workoutDayLabel(dayKey) {
+      if (dayKey === 'dayB') return 'Day B';
+      if (dayKey === 'dayC') return 'Day C';
+      return 'Day A';
+    }
+
+    function activeExercisesForDay(dayKey) {
+      const program = WORKOUT_DATABASE[dayKey];
+      const exercises = (program && program.exercises) || [];
+      const selected = activeExerciseSelections[dayKey];
+      if (!selected) return exercises.slice();
+      return exercises.filter((ex) => selected.has(ex.id));
+    }
+
     function switchWorkoutDay(dayKey) {
       currentWorkoutDay = dayKey;
       document.getElementById('btnDayA').className = dayKey === 'dayA' ? "flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-md transition-all" : "flex-1 py-2.5 px-4 rounded-xl text-sm font-bold bg-slate-800 text-slate-400 hover:text-white transition-all";
@@ -1637,53 +1578,119 @@ function initDatabase() {
       renderWorkoutExercises();
     }
 
-    function renderWorkoutExercises() {
-      const container = document.getElementById('workoutContainer');
-      const program = WORKOUT_DATABASE[currentWorkoutDay];
+    function openExerciseModal(dayKey) {
+      const day = dayKey || currentWorkoutDay;
+      const program = WORKOUT_DATABASE[day] || { exercises: [] };
+      const label = workoutDayLabel(day);
+      document.getElementById('macroModalTitle').innerText = `${label} exercises`;
+      document.getElementById('macroModalSubtitle').innerText = "Click 'Add' or 'Remove' to manage your active exercises list.";
 
-      if (!program) return;
+      const selected = activeExerciseSelections[day] || new Set();
+      const exercises = program.exercises || [];
+      const container = document.getElementById('macroModalContent');
+      let html = '';
 
-      let html = `
-        <div class="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-5 space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
-            <h4 class="font-bold text-indigo-300 text-base">${program.title}</h4>
-            <span class="text-xs text-slate-400 font-medium">Loaded from JSON • Check off sets</span>
-          </div>
-          <div class="space-y-3">
-      `;
+      if (!exercises.length) {
+        html = `<p class="text-xs text-slate-500 italic py-2">No exercises in the catalog for ${label}.</p>`;
+      }
 
-      program.exercises.forEach((ex, idx) => {
-        const tip = TOOLTIP_DATABASE[ex.id] || {};
-        const howTo = tip.how_to || '';
-        const showGoblet = (ex.id === 'a1' || /goblet/i.test(ex.name || ''));
-        const howToHtml = howTo
-          ? (String(howTo).startsWith('http')
-              ? `<a href="${howTo}" target="_blank" rel="noopener" class="text-xs text-indigo-400 hover:underline">How to</a>`
-              : `<p class="text-xs text-slate-500 mt-1">${howTo}</p>`)
-          : '';
-        const imgHtml = showGoblet
-          ? `<img src="img/gobletsquat.png" alt="Goblet squat" class="w-14 h-14 object-cover rounded-lg border border-slate-700">`
-          : '';
+      exercises.forEach((ex) => {
+        const isAdded = selected.has(ex.id);
+        const idArg = String(ex.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         html += `
-          <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <label class="flex items-center space-x-3 cursor-pointer">
-              <input type="checkbox" id="ex_check_${idx}" class="ex-checkbox w-4 h-4 text-indigo-600 rounded border-slate-700 bg-slate-800 focus:ring-indigo-500" data-burn="${ex.estBurn}">
-              ${imgHtml}
-              <div>
-                <p class="text-sm font-semibold text-slate-200">${ex.name}</p>
-                <p class="text-xs text-slate-400">${ex.sets}</p>
-                ${howToHtml}
-              </div>
-            </label>
-            <div class="flex items-center space-x-2">
-              <input type="number" placeholder="Weight (lbs)" id="ex_weight_${idx}" class="w-28 bg-slate-800 border border-slate-700 text-xs px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 text-white">
+          <div class="bg-slate-800/60 border border-slate-700 p-3 rounded-xl flex items-center justify-between gap-3">
+            <div>
+              <p class="text-sm font-semibold text-slate-200">${ex.name}</p>
+              <p class="text-xs text-slate-400">${ex.sets}${ex.estBurn != null ? ` • <span class="text-amber-400">${ex.estBurn} kcal</span>` : ''}</p>
+            </div>
+            <div>
+              ${isAdded ? `
+                <button type="button" onclick="toggleExerciseItem('${day}', '${idArg}', false)" class="px-3 py-1.5 rounded-lg bg-rose-900/60 hover:bg-rose-800 border border-rose-700/60 text-rose-200 text-xs font-bold transition-all flex items-center space-x-1">
+                  <i data-lucide="minus-circle" class="w-3.5 h-3.5"></i>
+                  <span>Remove</span>
+                </button>
+              ` : `
+                <button type="button" onclick="toggleExerciseItem('${day}', '${idArg}', true)" class="px-3 py-1.5 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-700/60 text-emerald-200 text-xs font-bold transition-all flex items-center space-x-1">
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                  <span>Add</span>
+                </button>
+              `}
             </div>
           </div>
         `;
       });
 
-      html += `</div></div>`;
       container.innerHTML = html;
+      openModal('macroSelectionModal');
+      lucide.createIcons();
+    }
+
+    function toggleExerciseItem(dayKey, exerciseId, shouldAdd) {
+      if (!activeExerciseSelections[dayKey]) activeExerciseSelections[dayKey] = new Set();
+      if (shouldAdd) {
+        activeExerciseSelections[dayKey].add(exerciseId);
+      } else {
+        activeExerciseSelections[dayKey].delete(exerciseId);
+      }
+      exerciseSelectionSaved[dayKey] = true;
+      persistExerciseSelections();
+      if (dayKey === currentWorkoutDay) renderWorkoutExercises();
+      openExerciseModal(dayKey);
+    }
+
+    function renderWorkoutExercises() {
+      const container = document.getElementById('workoutContainer');
+      if (!container) return;
+      const program = WORKOUT_DATABASE[currentWorkoutDay];
+      const title = (program && program.title) || workoutDayLabel(currentWorkoutDay);
+      const exercises = activeExercisesForDay(currentWorkoutDay);
+
+      let itemsHtml = '';
+      if (!exercises.length) {
+        itemsHtml = `<p class="text-xs text-slate-500 italic py-2">No exercises added for this day yet. Click Add / Edit Exercises above to add items.</p>`;
+      } else {
+        exercises.forEach((ex) => {
+          const tip = TOOLTIP_DATABASE[ex.id] || {};
+          const howTo = tip.how_to || '';
+          const showGoblet = (ex.id === 'a1' || /goblet/i.test(ex.name || ''));
+          const howToHtml = howTo
+            ? (String(howTo).startsWith('http')
+                ? `<a href="${howTo}" target="_blank" rel="noopener" class="text-xs text-indigo-400 hover:underline">How to</a>`
+                : `<p class="text-xs text-slate-500 mt-1">${howTo}</p>`)
+            : '';
+          const imgHtml = showGoblet
+            ? `<img src="img/gobletsquat.png" alt="Goblet squat" class="w-14 h-14 object-cover rounded-lg border border-slate-700">`
+            : '';
+          itemsHtml += `
+            <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <label class="flex items-center space-x-3 cursor-pointer">
+                <input type="checkbox" id="ex_check_${ex.id}" class="ex-checkbox w-4 h-4 text-indigo-600 rounded border-slate-700 bg-slate-800 focus:ring-indigo-500" data-burn="${ex.estBurn}">
+                ${imgHtml}
+                <div>
+                  <p class="text-sm font-semibold text-slate-200">${ex.name}</p>
+                  <p class="text-xs text-slate-400">${ex.sets}</p>
+                  ${howToHtml}
+                </div>
+              </label>
+              <div class="flex items-center space-x-2">
+                <input type="number" placeholder="Weight (lbs)" id="ex_weight_${ex.id}" class="w-28 bg-slate-800 border border-slate-700 text-xs px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 text-white">
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      container.innerHTML = `
+        <div class="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+            <h4 class="font-bold text-indigo-300 text-base">${title}</h4>
+            <span class="text-xs text-slate-400 font-medium">From workouts.json • Check off sets</span>
+          </div>
+          <div class="space-y-3">
+            ${itemsHtml}
+          </div>
+        </div>
+      `;
       lucide.createIcons();
     }
 
@@ -1717,12 +1724,12 @@ function initDatabase() {
       e.preventDefault();
       const today = new Date().toISOString().split('T')[0];
       const nowString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const program = WORKOUT_DATABASE[currentWorkoutDay];
+      const program = WORKOUT_DATABASE[currentWorkoutDay] || { title: workoutDayLabel(currentWorkoutDay) };
 
       const completedExercises = [];
-      program.exercises.forEach((ex, idx) => {
-        const isDone = document.getElementById(`ex_check_${idx}`)?.checked;
-        const weight = document.getElementById(`ex_weight_${idx}`)?.value;
+      activeExercisesForDay(currentWorkoutDay).forEach((ex) => {
+        const isDone = document.getElementById(`ex_check_${ex.id}`)?.checked;
+        const weight = document.getElementById(`ex_weight_${ex.id}`)?.value;
         if (isDone || weight) {
           completedExercises.push({ name: ex.name, sets: ex.sets, weight: weight || 'Bodyweight', completed: isDone });
         }
