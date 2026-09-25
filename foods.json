@@ -216,6 +216,13 @@
       "portion": "1/2 cup",
       "calories": 45,
       "protein": 3
+    },
+    {
+      "id": "p32",
+      "name": "Peanuts (Dry Roasted)",
+      "portion": "1 oz (28g)",
+      "calories": 165,
+      "protein": 7
     }
   ],
   "veggies": [
