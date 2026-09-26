@@ -834,17 +834,44 @@
       return `${activeProfile || 'dad'}_workout_entry_state`;
     }
 
-    // Next-day checks can use ?date=YYYY-MM-DD or localStorage bodytracker_date_override.
+    // YYYY-MM-DD from the browser's local calendar, never UTC.
+    function localDateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseLocalDateKey(dateKey) {
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey || '');
+      if (!match) return null;
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const day = Number(match[3]);
+      const parsed = new Date(year, month - 1, day);
+      if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) return null;
+      return parsed;
+    }
+
+    function shiftLocalDateKey(dateKey, dayDelta) {
+      const parsed = parseLocalDateKey(dateKey);
+      if (!parsed) return null;
+      parsed.setDate(parsed.getDate() + dayDelta);
+      return localDateKey(parsed);
+    }
+
+    // Next/previous day checks can use ?date=YYYY-MM-DD or localStorage bodytracker_date_override.
+    // Those keys are local calendar dates. The fallback is today's local date.
     function activeDateString() {
       try {
         const fromQuery = new URLSearchParams(window.location.search).get('date');
-        if (fromQuery && /^\d{4}-\d{2}-\d{2}$/.test(fromQuery)) return fromQuery;
+        if (parseLocalDateKey(fromQuery)) return fromQuery;
         const override = localStorage.getItem('bodytracker_date_override');
-        if (override && /^\d{4}-\d{2}-\d{2}$/.test(override)) return override;
+        if (parseLocalDateKey(override)) return override;
       } catch (err) {
         console.warn('Ignoring unreadable date override', err);
       }
-      return new Date().toISOString().split('T')[0];
+      return localDateKey(new Date());
     }
 
     function readStorageJson(key) {
@@ -1232,6 +1259,7 @@
         document.documentElement.classList.remove('needs-login', 'booting');
         migrateLegacyDraft();
         await reopenProfileDatabase();
+        await migrateUtcShiftedDateKeys();
         await loadAppData();
         switchWorkoutDay('dayA');
         try {
@@ -1499,6 +1527,146 @@ function initDatabase() {
         if (row && row.date) merged.set(row.date, row);
       });
       return Array.from(merged.values());
+    }
+
+    function utcDateKey(instant) {
+      const year = instant.getUTCFullYear();
+      const month = String(instant.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(instant.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function absoluteInstant(record) {
+      if (!record || typeof record !== 'object') return null;
+      const candidates = [];
+      if (record.savedAt != null) candidates.push(record.savedAt);
+      if (typeof record.timestamp === 'number' || (typeof record.timestamp === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(record.timestamp))) {
+        candidates.push(record.timestamp);
+      }
+      for (let i = 0; i < candidates.length; i++) {
+        const value = candidates[i];
+        let instant = null;
+        if (typeof value === 'number' && Number.isFinite(value)) instant = new Date(value);
+        else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) instant = new Date(value);
+        if (!instant || Number.isNaN(instant.getTime())) continue;
+        const year = instant.getFullYear();
+        if (year < 2000 || year > 2100) continue;
+        return instant;
+      }
+      return null;
+    }
+
+    // The old UTC date key is exactly one local day ahead of the instant that saved it.
+    function correctedLocalDateForShiftedKey(storedDate, record) {
+      if (!parseLocalDateKey(storedDate)) return null;
+      const instant = absoluteInstant(record);
+      if (!instant) return null;
+      const localKey = localDateKey(instant);
+      if (storedDate === utcDateKey(instant) && localKey === shiftLocalDateKey(storedDate, -1)) return localKey;
+      return null;
+    }
+
+    function datedStorageKey(storeName, dateKey) {
+      if (storeName === 'diet_day') return dietDayStorageKey(dateKey);
+      if (storeName === 'workout_day') return workoutDayStorageKey(dateKey);
+      return logStorageKey(storeName, dateKey);
+    }
+
+    function collectLocalDatedEntries(storeName) {
+      const entries = [];
+      const prefix = `${activeProfile || 'dad'}_${storeName}_`;
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(prefix)) keys.push(key);
+      }
+      if ((activeProfile || 'dad') === 'dad' && (storeName === 'diet_logs' || storeName === 'workout_logs')) {
+        const legacyPrefix = `${storeName}_`;
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (!key || !key.startsWith(legacyPrefix) || key.startsWith('dad_') || key.startsWith('son_')) continue;
+          keys.push(key);
+        }
+      }
+      keys.forEach((key) => {
+        const storedDate = key.startsWith(prefix) ? key.slice(prefix.length) : key.slice(`${storeName}_`.length);
+        if (!parseLocalDateKey(storedDate)) return;
+        const record = readStorageJson(key);
+        if (!record || typeof record !== 'object') return;
+        entries.push({ kind: 'local', storageKey: key, storedDate, record });
+      });
+      return entries;
+    }
+
+    function readAllIdb(storeName) {
+      return new Promise((resolve) => {
+        if (!dbInstance || !dbInstance.objectStoreNames.contains(storeName)) {
+          resolve([]);
+          return;
+        }
+        const tx = dbInstance.transaction(storeName, 'readonly');
+        const request = tx.objectStore(storeName).getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => resolve([]);
+      });
+    }
+
+    function replaceIdbDate(storeName, record, previousDate) {
+      return new Promise((resolve) => {
+        if (!dbInstance) {
+          resolve(false);
+          return;
+        }
+        const tx = dbInstance.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        if (previousDate && previousDate !== record.date) store.delete(previousDate);
+        store.put(record);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+      });
+    }
+
+    async function migrateUtcShiftedDateKeys() {
+      const storeNames = ['diet_logs', 'workout_logs', 'diet_day', 'workout_day'];
+      for (let s = 0; s < storeNames.length; s++) {
+        const storeName = storeNames[s];
+        const entries = collectLocalDatedEntries(storeName);
+        if (storeName === 'diet_logs' || storeName === 'workout_logs') {
+          const rows = await readAllIdb(storeName);
+          rows.forEach((record) => {
+            if (!record || !parseLocalDateKey(record.date)) return;
+            entries.push({ kind: 'idb', storageKey: null, storedDate: record.date, record });
+          });
+        }
+        const datesWithEntries = new Set(entries.map((entry) => entry.storedDate));
+        const groups = new Map();
+        entries.forEach((entry) => {
+          const target = correctedLocalDateForShiftedKey(entry.storedDate, entry.record);
+          if (!target) return;
+          const groupKey = `${entry.storedDate}:${target}`;
+          if (!groups.has(groupKey)) {
+            groups.set(groupKey, { storedDate: entry.storedDate, target, entries: [] });
+          }
+          groups.get(groupKey).entries.push(entry);
+        });
+        for (const group of groups.values()) {
+          if (datesWithEntries.has(group.target)) continue;
+          datesWithEntries.add(group.target);
+          const localEntries = group.entries.filter((entry) => entry.kind === 'local');
+          const idbEntries = group.entries.filter((entry) => entry.kind === 'idb');
+          if (localEntries.length) {
+            const profilePrefix = `${activeProfile || 'dad'}_`;
+            const chosen = localEntries.find((entry) => entry.storageKey && entry.storageKey.startsWith(profilePrefix)) || localEntries[0];
+            const updated = Object.assign({}, chosen.record, { date: group.target });
+            localStorage.setItem(datedStorageKey(storeName, group.target), JSON.stringify(updated));
+            localEntries.forEach((entry) => localStorage.removeItem(entry.storageKey));
+          }
+          for (let i = 0; i < idbEntries.length; i++) {
+            const updated = Object.assign({}, idbEntries[i].record, { date: group.target });
+            await replaceIdbDate(storeName, updated, group.storedDate);
+          }
+        }
+      }
     }
 
     /* ==========================================================================
@@ -1810,6 +1978,7 @@ function initDatabase() {
     function saveDietDay(dateKey, dom, stats) {
       const record = {
         date: dateKey,
+        savedAt: new Date().toISOString(),
         checkboxes: dom.checkboxes,
         quantities: dom.quantities,
         others: dom.others,
@@ -1898,6 +2067,7 @@ function initDatabase() {
 
       const payload = {
         date: today,
+        savedAt: new Date().toISOString(),
         timestamp: nowString,
         totalProtein: stats.totalProtein,
         calculatedCalories: stats.totalCalories,
@@ -1963,6 +2133,7 @@ function initDatabase() {
       if (!workoutDayHasActivity({ checks }) && !localStorage.getItem(key)) return;
       localStorage.setItem(key, JSON.stringify({
         date: dateKey,
+        savedAt: new Date().toISOString(),
         checks,
         weights: day.weights || {},
         estimatedBurn: burnForChecks(checks)
@@ -2222,6 +2393,7 @@ function initDatabase() {
 
       const payload = {
         date: today,
+        savedAt: new Date().toISOString(),
         timestamp: nowString,
         dayType: program.title,
         completedExercises,
@@ -2238,10 +2410,12 @@ function initDatabase() {
     /* ==========================================================================
        INTERACTIVE CALENDAR ENGINE
        ========================================================================== */
-    let currentCalDate = new Date();
+    let currentCalDate = parseLocalDateKey(localDateKey(new Date()));
 
     function changeMonth(direction) {
-      currentCalDate.setMonth(currentCalDate.getMonth() + direction);
+      const cursor = parseLocalDateKey(localDateKey(currentCalDate));
+      cursor.setMonth(cursor.getMonth() + direction);
+      currentCalDate = cursor;
       renderCalendar();
     }
 
@@ -2359,7 +2533,7 @@ function initDatabase() {
       const todayString = activeDateString();
 
       for (let day = 1; day <= daysInMonth; day++) {
-        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateKey = localDateKey(new Date(year, month, day));
         const hasLog = loggedDates.has(dateKey);
         const isToday = dateKey === todayString;
 
