@@ -784,6 +784,7 @@
     };
 
     let activeProfile = null;
+    let activeTrackerDate = null;
 
     function currentProfile() {
       return PROFILES[activeProfile] || PROFILES.dad;
@@ -811,6 +812,307 @@
 
     function logStorageKey(storeName, dateKey) {
       return `${activeProfile || 'dad'}_${storeName}_${dateKey}`;
+    }
+
+    function foodListStorageKey() {
+      return `${activeProfile || 'dad'}_active_food_selections`;
+    }
+
+    function dietDayStorageKey(dateKey) {
+      return `${activeProfile || 'dad'}_diet_day_${dateKey}`;
+    }
+
+    function exerciseWeightStorageKey() {
+      return `${activeProfile || 'dad'}_exercise_weights`;
+    }
+
+    function workoutDayStorageKey(dateKey) {
+      return `${activeProfile || 'dad'}_workout_day_${dateKey}`;
+    }
+
+    function workoutEntryLegacyKey() {
+      return `${activeProfile || 'dad'}_workout_entry_state`;
+    }
+
+    // Next-day checks can use ?date=YYYY-MM-DD or localStorage bodytracker_date_override.
+    function activeDateString() {
+      try {
+        const fromQuery = new URLSearchParams(window.location.search).get('date');
+        if (fromQuery && /^\d{4}-\d{2}-\d{2}$/.test(fromQuery)) return fromQuery;
+        const override = localStorage.getItem('bodytracker_date_override');
+        if (override && /^\d{4}-\d{2}-\d{2}$/.test(override)) return override;
+      } catch (err) {
+        console.warn('Ignoring unreadable date override', err);
+      }
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function readStorageJson(key) {
+      if (!key) return null;
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (err) {
+        console.warn('Ignoring unreadable storage', key, err);
+        return null;
+      }
+    }
+
+    function profileOwnsKey(key) {
+      if (!key) return false;
+      const profile = activeProfile || 'dad';
+      if (key.startsWith(`${profile}_`)) return true;
+      return profile === 'dad' && key === LEGACY_DRAFT_KEY;
+    }
+
+    function dateFromKey(key) {
+      const match = String(key || '').match(/(\d{4}-\d{2}-\d{2})$/);
+      return match ? match[1] : null;
+    }
+
+    function foodListFromRecord(record) {
+      if (!record || typeof record !== 'object' || Array.isArray(record)) return null;
+      const src = record.activeSelections && typeof record.activeSelections === 'object'
+        ? record.activeSelections
+        : record;
+      if (!Array.isArray(src.morning) && !Array.isArray(src.afternoon) && !Array.isArray(src.night)) return null;
+      return {
+        morning: Array.isArray(src.morning) ? src.morning.slice() : [],
+        afternoon: Array.isArray(src.afternoon) ? src.afternoon.slice() : [],
+        night: Array.isArray(src.night) ? src.night.slice() : [],
+        quantities: (record.quantities && typeof record.quantities === 'object') ? record.quantities : {},
+        checkboxes: (record.checkboxes && typeof record.checkboxes === 'object') ? record.checkboxes : {},
+        others: (record.others && typeof record.others === 'object') ? record.others : {},
+        notes: record.notes || '',
+        totalProtein: record.totalProtein,
+        calculatedCalories: record.calculatedCalories
+      };
+    }
+
+    function findMostRecentFoodList() {
+      const candidates = [];
+      const seen = new Set();
+      const consider = (key, record, undatedIsToday) => {
+        if (!key || seen.has(key)) return;
+        const list = foodListFromRecord(record);
+        if (!list) return;
+        seen.add(key);
+        const dated = dateFromKey(key) || (typeof record.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(record.date) ? record.date : null);
+        candidates.push({
+          date: dated || (undatedIsToday ? activeDateString() : '0000-00-00'),
+          undated: !dated,
+          list
+        });
+      };
+
+      const draftKey = draftStorageKey();
+      consider(draftKey, readStorageJson(draftKey), true);
+      if ((activeProfile || 'dad') === 'dad') {
+        consider(LEGACY_DRAFT_KEY, readStorageJson(LEGACY_DRAFT_KEY), true);
+      }
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!profileOwnsKey(key) || key === foodListStorageKey() || key === draftKey || key === LEGACY_DRAFT_KEY) continue;
+        consider(key, readStorageJson(key), false);
+      }
+      if (!candidates.length) return null;
+      candidates.sort((a, b) => {
+        if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+        if (a.undated !== b.undated) return a.undated ? -1 : 1;
+        return 0;
+      });
+      return candidates[0];
+    }
+
+    function defaultFoodList() {
+      return {
+        morning: ['proteins_p3', 'carbs_c1'],
+        afternoon: ['proteins_p1', 'carbs_c2'],
+        night: ['proteins_p4'],
+        quantities: {}
+      };
+    }
+
+    function dietRecordHasActivity(record) {
+      if (!record || typeof record !== 'object') return false;
+      if (String(record.notes || '').trim()) return true;
+      if (Object.values(record.checkboxes || {}).some(Boolean)) return true;
+      if (Object.values(record.others || {}).some((value) => String(value || '').trim())) return true;
+      return false;
+    }
+
+    function ensurePersistentFoodList() {
+      const key = foodListStorageKey();
+      if (localStorage.getItem(key)) return;
+      const found = findMostRecentFoodList();
+      if (!found) {
+        localStorage.setItem(key, JSON.stringify(defaultFoodList()));
+        return;
+      }
+      localStorage.setItem(key, JSON.stringify({
+        morning: found.list.morning,
+        afternoon: found.list.afternoon,
+        night: found.list.night,
+        quantities: found.list.quantities || {}
+      }));
+      const today = activeDateString();
+      const dayKey = dietDayStorageKey(today);
+      if (found.date === today && !localStorage.getItem(dayKey) && dietRecordHasActivity(found.list)) {
+        localStorage.setItem(dayKey, JSON.stringify({
+          date: today,
+          checkboxes: found.list.checkboxes || {},
+          quantities: found.list.quantities || {},
+          others: found.list.others || {},
+          notes: found.list.notes || '',
+          totalProtein: found.list.totalProtein || 0,
+          calculatedCalories: found.list.calculatedCalories || 0
+        }));
+      }
+    }
+
+    function exerciseSelectionFromRecord(record) {
+      if (!record || typeof record !== 'object' || Array.isArray(record)) return null;
+      const payload = {};
+      let any = false;
+      WORKOUT_DAYS.forEach((dayKey) => {
+        if (Array.isArray(record[dayKey])) {
+          payload[dayKey] = record[dayKey].slice();
+          any = true;
+        }
+      });
+      return any ? payload : null;
+    }
+
+    function findMostRecentExerciseList() {
+      const candidates = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!profileOwnsKey(key) || key === exerciseSelectionStorageKey()) continue;
+        const record = readStorageJson(key);
+        const selections = exerciseSelectionFromRecord(record);
+        if (!selections) continue;
+        const date = dateFromKey(key) || (record && typeof record.date === 'string' ? record.date : '');
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+        candidates.push({ date, selections });
+      }
+      if (!candidates.length) return null;
+      candidates.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+      return candidates[0];
+    }
+
+    function weightsBag(record) {
+      if (!record || typeof record !== 'object' || Array.isArray(record)) return null;
+      if (!record.weights || typeof record.weights !== 'object' || Array.isArray(record.weights)) return null;
+      return record.weights;
+    }
+
+    function findExerciseById(exerciseId) {
+      for (let i = 0; i < WORKOUT_DAYS.length; i++) {
+        const exercises = ((WORKOUT_DATABASE[WORKOUT_DAYS[i]] || {}).exercises) || [];
+        for (let j = 0; j < exercises.length; j++) {
+          if (exercises[j].id === exerciseId) return exercises[j];
+        }
+      }
+      return null;
+    }
+
+    function burnForChecks(checks) {
+      let total = 0;
+      Object.entries(checks || {}).forEach(([id, on]) => {
+        if (!on) return;
+        const ex = findExerciseById(id);
+        if (ex) total += Number(ex.estBurn) || 0;
+      });
+      return total;
+    }
+
+    function findMostRecentWeights() {
+      const candidates = [];
+      const entryKey = workoutEntryLegacyKey();
+      const entry = readStorageJson(entryKey);
+      const entryWeights = weightsBag(entry);
+      if (entryWeights) {
+        candidates.push({ date: activeDateString(), undated: true, weights: entryWeights });
+      }
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!profileOwnsKey(key) || key === exerciseWeightStorageKey() || key === entryKey) continue;
+        if (key.indexOf('workout') === -1 && key.indexOf('exercise') === -1) continue;
+        const record = readStorageJson(key);
+        const weights = weightsBag(record);
+        if (!weights) continue;
+        const date = dateFromKey(key) || (record && record.date);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) continue;
+        candidates.push({ date, undated: false, weights });
+      }
+      if (!candidates.length) return null;
+      candidates.sort((a, b) => {
+        if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+        if (a.undated !== b.undated) return a.undated ? -1 : 1;
+        return 0;
+      });
+      return candidates[0];
+    }
+
+    function ensurePersistentExerciseState() {
+      const selectionKey = exerciseSelectionStorageKey();
+      if (!localStorage.getItem(selectionKey)) {
+        const found = findMostRecentExerciseList();
+        if (found) localStorage.setItem(selectionKey, JSON.stringify(found.selections));
+      }
+      const weightKey = exerciseWeightStorageKey();
+      if (!localStorage.getItem(weightKey)) {
+        const found = findMostRecentWeights();
+        localStorage.setItem(weightKey, JSON.stringify((found && found.weights) || {}));
+      }
+      const migratedFlag = `${activeProfile || 'dad'}_workout_entry_migrated`;
+      if (localStorage.getItem(migratedFlag) === '1') return;
+      const entry = readStorageJson(workoutEntryLegacyKey());
+      const today = activeDateString();
+      const dayKey = workoutDayStorageKey(today);
+      if (entry && entry.checks && typeof entry.checks === 'object' && !localStorage.getItem(dayKey)) {
+        if (Object.values(entry.checks).some(Boolean)) {
+          localStorage.setItem(dayKey, JSON.stringify({
+            date: today,
+            checks: entry.checks,
+            weights: entry.weights || {},
+            estimatedBurn: burnForChecks(entry.checks)
+          }));
+        }
+      }
+      localStorage.setItem(migratedFlag, '1');
+    }
+
+    function rolloverIfDateChanged() {
+      const today = activeDateString();
+      if (!activeTrackerDate) {
+        activeTrackerDate = today;
+        return false;
+      }
+      if (activeTrackerDate === today) return false;
+      activeTrackerDate = today;
+      const cardioDone = document.getElementById('cardio_completed');
+      const cardioDetails = document.getElementById('cardio_details');
+      if (cardioDone) cardioDone.checked = false;
+      if (cardioDetails) cardioDetails.value = '';
+      const result = document.getElementById('calorieEstimateResult');
+      if (result) {
+        result.innerHTML = 'Estimated burn: <span class="font-bold text-slate-200">0 kcal</span> (Based on 240lb user profile)';
+      }
+      return true;
+    }
+
+    function presentTrackerDate() {
+      applyFoodQuantities((readStorageJson(foodListStorageKey()) || {}).quantities);
+      applyDietDayPresentation(activeDateString());
+      applyWorkoutDayPresentation(activeDateString());
+    }
+
+    function onMaybeDateChange() {
+      if (!activeProfile) return;
+      if (!rolloverIfDateChanged()) return;
+      presentTrackerDate();
     }
 
     function applyProfileTargets() {
@@ -894,11 +1196,16 @@
         dbInstance.close();
         dbInstance = null;
       }
+      activeTrackerDate = null;
       activeFoodSelections = { morning: new Set(), afternoon: new Set(), night: new Set() };
       activeExerciseSelections = { dayA: new Set(), dayB: new Set(), dayC: new Set() };
       exerciseSelectionSaved = { dayA: false, dayB: false, dayC: false };
       const form = document.getElementById('dietForm');
       if (form) form.reset();
+      ['morning_foods_container', 'afternoon_foods_container', 'night_foods_container', 'workoutContainer'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+      });
       const input = document.getElementById('loginPassword');
       const error = document.getElementById('loginError');
       if (input) input.value = '';
@@ -993,6 +1300,7 @@
     }
 
     function loadExerciseSelections() {
+      ensurePersistentExerciseState();
       activeExerciseSelections = {
         dayA: new Set(),
         dayB: new Set(),
@@ -1429,20 +1737,10 @@ function initDatabase() {
       };
     }
 
-    function autoSaveDietDraft() {
-      const stats = calculateRealtimeCalories();
-      const draft = {
-        activeSelections: {
-          morning: Array.from(activeFoodSelections.morning),
-          afternoon: Array.from(activeFoodSelections.afternoon),
-          night: Array.from(activeFoodSelections.night)
-        },
-        checkboxes: {},
-        quantities: {},
-        others: {},
-        notes: document.getElementById('diet_notes').value
-      };
-
+    function collectDietDomState() {
+      const checkboxes = {};
+      const quantities = {};
+      const others = {};
       MEAL_TIMES.forEach(time => {
         ['proteins', 'veggies', 'carbs', 'fats'].forEach(cat => {
           if (!FOOD_DATABASE[cat]) return;
@@ -1450,91 +1748,127 @@ function initDatabase() {
             const elementId = `${time}_${cat}_${food.id}`;
             const chk = document.getElementById(`${elementId}_check`);
             const qtyInput = document.getElementById(`${elementId}_qty`);
-
-            if (chk) draft.checkboxes[`${elementId}_check`] = chk.checked;
-            if (qtyInput) draft.quantities[`${elementId}_qty`] = qtyInput.value;
+            if (chk) checkboxes[`${elementId}_check`] = chk.checked;
+            if (qtyInput) quantities[`${elementId}_qty`] = qtyInput.value;
           });
         });
-
-        draft.others[`${time}_other_name`] = document.getElementById(`${time}_other_name`)?.value || '';
-        draft.others[`${time}_other_cals`] = document.getElementById(`${time}_other_cals`)?.value || '';
-        draft.others[`${time}_other_prot`] = document.getElementById(`${time}_other_prot`)?.value || '';
+        others[`${time}_other_name`] = document.getElementById(`${time}_other_name`)?.value || '';
+        others[`${time}_other_cals`] = document.getElementById(`${time}_other_cals`)?.value || '';
+        others[`${time}_other_prot`] = document.getElementById(`${time}_other_prot`)?.value || '';
       });
+      return {
+        checkboxes,
+        quantities,
+        others,
+        notes: document.getElementById('diet_notes')?.value || ''
+      };
+    }
 
-      localStorage.setItem(currentDraftKey(), JSON.stringify(draft));
+    function applyFoodQuantities(quantities) {
+      Object.entries(quantities || {}).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el && value !== undefined && value !== null) el.value = value;
+      });
+    }
+
+    function applyDietDayPresentation(dateKey) {
+      document.querySelectorAll('#dietForm .food-checkbox').forEach((el) => {
+        el.checked = false;
+      });
+      MEAL_TIMES.forEach((time) => {
+        ['other_name', 'other_cals', 'other_prot'].forEach((suffix) => {
+          const el = document.getElementById(`${time}_${suffix}`);
+          if (el) el.value = '';
+        });
+      });
+      const notes = document.getElementById('diet_notes');
+      if (notes) notes.value = '';
+      const day = readStorageJson(dietDayStorageKey(dateKey));
+      if (day && typeof day === 'object') {
+        Object.entries(day.checkboxes || {}).forEach(([id, value]) => {
+          const el = document.getElementById(id);
+          if (el) el.checked = !!value;
+        });
+        Object.entries(day.others || {}).forEach(([id, value]) => {
+          const el = document.getElementById(id);
+          if (el) el.value = value;
+        });
+        if (notes) notes.value = day.notes || '';
+      }
+      calculateRealtimeCalories();
+    }
+
+    function savePersistentFoodList(quantities) {
+      localStorage.setItem(foodListStorageKey(), JSON.stringify({
+        morning: Array.from(activeFoodSelections.morning),
+        afternoon: Array.from(activeFoodSelections.afternoon),
+        night: Array.from(activeFoodSelections.night),
+        quantities: quantities || {}
+      }));
+    }
+
+    function saveDietDay(dateKey, dom, stats) {
+      const record = {
+        date: dateKey,
+        checkboxes: dom.checkboxes,
+        quantities: dom.quantities,
+        others: dom.others,
+        notes: dom.notes,
+        totalProtein: stats.totalProtein,
+        calculatedCalories: stats.totalCalories
+      };
+      const key = dietDayStorageKey(dateKey);
+      if (!dietRecordHasActivity(record) && !localStorage.getItem(key)) return;
+      localStorage.setItem(key, JSON.stringify(record));
+    }
+
+    function autoSaveDietDraft() {
+      const rolled = rolloverIfDateChanged();
+      if (rolled) presentTrackerDate();
+      const dom = collectDietDomState();
+      const stats = calculateRealtimeCalories();
+      savePersistentFoodList(dom.quantities);
+      saveDietDay(activeDateString(), dom, stats);
     }
 
     function loadDietDraft() {
+      activeTrackerDate = activeDateString();
+      ensurePersistentFoodList();
+      const list = readStorageJson(foodListStorageKey()) || defaultFoodList();
       activeFoodSelections = {
-        morning: new Set(),
-        afternoon: new Set(),
-        night: new Set()
+        morning: new Set(list.morning || []),
+        afternoon: new Set(list.afternoon || []),
+        night: new Set(list.night || [])
       };
-      const raw = localStorage.getItem(currentDraftKey());
-      if (!raw) {
-        // Default initial items
-        activeFoodSelections.morning.add('proteins_p3');
-        activeFoodSelections.morning.add('carbs_c1');
-        activeFoodSelections.afternoon.add('proteins_p1');
-        activeFoodSelections.afternoon.add('carbs_c2');
-        activeFoodSelections.night.add('proteins_p4');
-        renderFoodSections();
-        return;
-      }
-
-      try {
-        const draft = JSON.parse(raw);
-
-        if (draft.activeSelections) {
-          activeFoodSelections.morning = new Set(draft.activeSelections.morning || []);
-          activeFoodSelections.afternoon = new Set(draft.activeSelections.afternoon || []);
-          activeFoodSelections.night = new Set(draft.activeSelections.night || []);
-        }
-
-        renderFoodSections();
-
-        if (draft.checkboxes) {
-          for (const [id, value] of Object.entries(draft.checkboxes)) {
-            const el = document.getElementById(id);
-            if (el) el.checked = value;
-          }
-        }
-
-        if (draft.quantities) {
-          for (const [id, value] of Object.entries(draft.quantities)) {
-            const el = document.getElementById(id);
-            if (el) el.value = value;
-          }
-        }
-
-        if (draft.others) {
-          for (const [id, value] of Object.entries(draft.others)) {
-            const el = document.getElementById(id);
-            if (el) el.value = value;
-          }
-        }
-
-        if (draft.notes) {
-          document.getElementById('diet_notes').value = draft.notes;
-        }
-
-        calculateRealtimeCalories();
-      } catch (e) {
-        console.error("Error loading draft", e);
-      }
+      renderFoodSections();
+      applyFoodQuantities(list.quantities);
+      applyDietDayPresentation(activeTrackerDate);
     }
 
     function resetDietForm() {
+      const list = readStorageJson(foodListStorageKey()) || {};
       document.getElementById('dietForm').reset();
-      localStorage.removeItem(currentDraftKey());
-      activeFoodSelections = { morning: new Set(), afternoon: new Set(), night: new Set() };
-      renderFoodSections();
+      applyFoodQuantities(list.quantities || {});
+      const dateKey = activeDateString();
+      const key = dietDayStorageKey(dateKey);
+      if (localStorage.getItem(key)) {
+        localStorage.setItem(key, JSON.stringify({
+          date: dateKey,
+          checkboxes: {},
+          quantities: list.quantities || {},
+          others: {},
+          notes: '',
+          totalProtein: 0,
+          calculatedCalories: 0
+        }));
+      }
       calculateRealtimeCalories();
     }
 
     async function handleDietSubmit(e) {
       e.preventDefault();
-      const today = new Date().toISOString().split('T')[0];
+      autoSaveDietDraft();
+      const today = activeDateString();
       const nowString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const stats = calculateRealtimeCalories();
 
@@ -1576,7 +1910,6 @@ function initDatabase() {
       };
 
       await saveToDB('diet_logs', payload);
-      resetDietForm();
       renderCalendar();
       alert(`Daily Diet Log submitted for ${today}!`);
     }
@@ -1600,72 +1933,114 @@ function initDatabase() {
       return exercises.filter((ex) => selected.has(ex.id));
     }
 
-    function exerciseEntryStorageKey() {
-      return `${activeProfile || 'dad'}_workout_entry_state`;
+    function readPersistentWeights() {
+      const weights = readStorageJson(exerciseWeightStorageKey());
+      return (weights && typeof weights === 'object' && !Array.isArray(weights)) ? weights : {};
     }
 
-    function readExerciseEntryState() {
-      try {
-        const raw = localStorage.getItem(exerciseEntryStorageKey());
-        if (!raw) return { checks: {}, weights: {} };
-        const parsed = JSON.parse(raw);
-        return {
-          checks: (parsed && parsed.checks) || {},
-          weights: (parsed && parsed.weights) || {}
-        };
-      } catch (err) {
-        console.warn('Ignoring unreadable workout entry state', err);
-        return { checks: {}, weights: {} };
-      }
+    function writePersistentWeights(weights) {
+      localStorage.setItem(exerciseWeightStorageKey(), JSON.stringify(weights || {}));
     }
 
-    function writeExerciseEntryState(state) {
-      localStorage.setItem(exerciseEntryStorageKey(), JSON.stringify({
-        checks: state.checks || {},
-        weights: state.weights || {}
+    function readWorkoutDay(dateKey) {
+      const day = readStorageJson(workoutDayStorageKey(dateKey));
+      if (!day || typeof day !== 'object') return { date: dateKey, checks: {}, weights: {}, estimatedBurn: 0 };
+      return {
+        date: dateKey,
+        checks: day.checks || {},
+        weights: day.weights || {},
+        estimatedBurn: day.estimatedBurn || 0
+      };
+    }
+
+    function workoutDayHasActivity(day) {
+      return Object.values((day && day.checks) || {}).some(Boolean);
+    }
+
+    function writeWorkoutDay(dateKey, day) {
+      const checks = day.checks || {};
+      const key = workoutDayStorageKey(dateKey);
+      if (!workoutDayHasActivity({ checks }) && !localStorage.getItem(key)) return;
+      localStorage.setItem(key, JSON.stringify({
+        date: dateKey,
+        checks,
+        weights: day.weights || {},
+        estimatedBurn: burnForChecks(checks)
       }));
     }
 
-    function captureVisibleExerciseEntries() {
-      const state = readExerciseEntryState();
-      document.querySelectorAll('#workoutContainer .ex-checkbox').forEach(el => {
+    function applyWorkoutDayPresentation(dateKey) {
+      const day = readWorkoutDay(dateKey);
+      const weights = readPersistentWeights();
+      document.querySelectorAll('#workoutContainer .ex-checkbox').forEach((el) => {
         const id = el.id.replace(/^ex_check_/, '');
-        state.checks[id] = el.checked;
+        el.checked = !!day.checks[id];
       });
-      document.querySelectorAll('#workoutContainer input[id^="ex_weight_"]').forEach(el => {
+      document.querySelectorAll('#workoutContainer input[id^="ex_weight_"]').forEach((el) => {
         const id = el.id.replace(/^ex_weight_/, '');
-        state.weights[id] = el.value;
+        if (Object.prototype.hasOwnProperty.call(weights, id)) el.value = weights[id];
       });
-      writeExerciseEntryState(state);
-      return state;
+    }
+
+    function captureVisibleExerciseEntries() {
+      const rolled = rolloverIfDateChanged();
+      if (rolled) presentTrackerDate();
+      const dateKey = activeDateString();
+      const day = readWorkoutDay(dateKey);
+      const weights = readPersistentWeights();
+      document.querySelectorAll('#workoutContainer .ex-checkbox').forEach((el) => {
+        const id = el.id.replace(/^ex_check_/, '');
+        day.checks[id] = el.checked;
+      });
+      document.querySelectorAll('#workoutContainer input[id^="ex_weight_"]').forEach((el) => {
+        const id = el.id.replace(/^ex_weight_/, '');
+        day.weights[id] = el.value;
+        weights[id] = el.value;
+      });
+      writePersistentWeights(weights);
+      writeWorkoutDay(dateKey, day);
+      return day;
     }
 
     function forgetExerciseEntry(exerciseId) {
-      const state = readExerciseEntryState();
-      delete state.checks[exerciseId];
-      delete state.weights[exerciseId];
-      writeExerciseEntryState(state);
+      const rolled = rolloverIfDateChanged();
+      if (rolled) presentTrackerDate();
+      const weights = readPersistentWeights();
+      delete weights[exerciseId];
+      writePersistentWeights(weights);
+      const dateKey = activeDateString();
+      const day = readWorkoutDay(dateKey);
+      delete day.checks[exerciseId];
+      delete day.weights[exerciseId];
+      writeWorkoutDay(dateKey, day);
     }
 
     function rememberExerciseEntry(exerciseId) {
-      const state = readExerciseEntryState();
+      const rolled = rolloverIfDateChanged();
+      if (rolled) presentTrackerDate();
+      const dateKey = activeDateString();
+      const day = readWorkoutDay(dateKey);
+      const weights = readPersistentWeights();
       const chk = document.getElementById(`ex_check_${exerciseId}`);
       const weight = document.getElementById(`ex_weight_${exerciseId}`);
-      if (chk) state.checks[exerciseId] = chk.checked;
-      if (weight) state.weights[exerciseId] = weight.value;
-      writeExerciseEntryState(state);
+      if (chk) day.checks[exerciseId] = chk.checked;
+      if (weight) {
+        day.weights[exerciseId] = weight.value;
+        weights[exerciseId] = weight.value;
+      }
+      writePersistentWeights(weights);
+      writeWorkoutDay(dateKey, day);
     }
 
     function applyExerciseEntryState(exercises) {
-      const state = readExerciseEntryState();
+      const day = readWorkoutDay(activeDateString());
+      const weights = readPersistentWeights();
       exercises.forEach(ex => {
         const chk = document.getElementById(`ex_check_${ex.id}`);
         const weight = document.getElementById(`ex_weight_${ex.id}`);
-        if (chk && Object.prototype.hasOwnProperty.call(state.checks, ex.id)) {
-          chk.checked = !!state.checks[ex.id];
-        }
-        if (weight && Object.prototype.hasOwnProperty.call(state.weights, ex.id)) {
-          weight.value = state.weights[ex.id];
+        if (chk) chk.checked = !!day.checks[ex.id];
+        if (weight && Object.prototype.hasOwnProperty.call(weights, ex.id)) {
+          weight.value = weights[ex.id];
         }
       });
     }
@@ -1829,7 +2204,8 @@ function initDatabase() {
 
     async function handleWorkoutSubmit(e) {
       e.preventDefault();
-      const today = new Date().toISOString().split('T')[0];
+      captureVisibleExerciseEntries();
+      const today = activeDateString();
       const nowString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const program = WORKOUT_DATABASE[currentWorkoutDay] || { title: workoutDayLabel(currentWorkoutDay) };
 
@@ -1869,6 +2245,90 @@ function initDatabase() {
       renderCalendar();
     }
 
+    function datesWithStoredActivity(kind) {
+      const prefix = `${activeProfile || 'dad'}_${kind}_`;
+      const dates = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith(prefix)) continue;
+        const date = key.slice(prefix.length);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+        const rec = readStorageJson(key);
+        if (kind === 'diet_day' && dietRecordHasActivity(rec)) dates.push(date);
+        if (kind === 'workout_day' && workoutDayHasActivity(rec)) dates.push(date);
+      }
+      return dates;
+    }
+
+    function checkedFoodsForDay(day) {
+      const checks = (day && day.checkboxes) || {};
+      const quantities = (day && day.quantities) || {};
+      const others = (day && day.others) || {};
+      const selected = { morning: [], afternoon: [], night: [] };
+      MEAL_TIMES.forEach((time) => {
+        ['proteins', 'veggies', 'carbs', 'fats'].forEach((cat) => {
+          (FOOD_DATABASE[cat] || []).forEach((food) => {
+            const checkId = `${time}_${cat}_${food.id}_check`;
+            if (!checks[checkId]) return;
+            const qty = quantities[`${time}_${cat}_${food.id}_qty`] || '1';
+            selected[time].push(`${food.name} (${qty}x ${food.portion})`);
+          });
+        });
+        if (others[`${time}_other_name`]) {
+          selected[time].push(`Other: ${others[`${time}_other_name`]} (${others[`${time}_other_cals`] || 0} kcal)`);
+        }
+      });
+      return selected;
+    }
+
+    function dietSnapshotHtml(day) {
+      const foods = checkedFoodsForDay(day);
+      return `
+        <div class="bg-slate-800/50 border border-slate-700 p-4 rounded-xl space-y-3">
+          <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+            <h4 class="font-bold text-emerald-400 flex items-center space-x-2"><i data-lucide="utensils" class="w-4 h-4"></i><span>Diet Summary</span></h4>
+            <span class="text-xs text-slate-400">Saved for this date</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-center pt-1">
+            <div class="bg-slate-900 p-2 rounded-lg"><p class="text-[10px] text-slate-400">Protein Target</p><p class="font-bold text-indigo-400 text-sm">${day.totalProtein || 0}g</p></div>
+            <div class="bg-slate-900 p-2 rounded-lg"><p class="text-[10px] text-slate-400">Calories Target</p><p class="font-bold text-amber-400 text-sm">${day.calculatedCalories || 0} kcal</p></div>
+          </div>
+          <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-800 space-y-1 text-xs text-slate-300">
+            <p class="font-semibold text-indigo-300">Specific Foods Logged:</p>
+            <p>• <strong>Morning:</strong> ${foods.morning.join(', ') || 'None selected'}</p>
+            <p>• <strong>Afternoon:</strong> ${foods.afternoon.join(', ') || 'None selected'}</p>
+            <p>• <strong>Night:</strong> ${foods.night.join(', ') || 'None selected'}</p>
+          </div>
+          ${day.notes ? `<p class="text-xs text-slate-400 italic">Notes: "${day.notes}"</p>` : ''}
+        </div>
+      `;
+    }
+
+    function workoutSnapshotHtml(day) {
+      const rows = Object.entries(day.checks || {}).filter(([, on]) => on).map(([id]) => {
+        const ex = findExerciseById(id);
+        const name = ex ? ex.name : id;
+        const weight = (day.weights && day.weights[id]) || 'Bodyweight';
+        return `
+          <div class="text-xs bg-slate-900/60 p-2 rounded flex justify-between">
+            <span class="text-slate-300">${name}</span>
+            <span class="text-indigo-300 font-semibold">${weight}</span>
+          </div>
+        `;
+      }).join('');
+      const burn = day.estimatedBurn || burnForChecks(day.checks);
+      return `
+        <div class="bg-slate-800/50 border border-slate-700 p-4 rounded-xl space-y-2">
+          <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+            <h4 class="font-bold text-indigo-400 flex items-center space-x-2"><i data-lucide="activity" class="w-4 h-4"></i><span>Workout Summary</span></h4>
+            <span class="text-xs text-slate-400">Saved for this date</span>
+          </div>
+          <div class="space-y-1 pt-1">${rows}</div>
+          <p class="text-xs text-slate-300 mt-2"><strong>Estimated Burn:</strong> ~${burn} kcal</p>
+        </div>
+      `;
+    }
+
     async function renderCalendar() {
       const year = currentCalDate.getFullYear();
       const month = currentCalDate.getMonth();
@@ -1884,7 +2344,9 @@ function initDatabase() {
 
       const loggedDates = new Set([
         ...dietLogs.map(d => d.date),
-        ...workoutLogs.map(w => w.date)
+        ...workoutLogs.map(w => w.date),
+        ...datesWithStoredActivity('diet_day'),
+        ...datesWithStoredActivity('workout_day')
       ]);
 
       const grid = document.getElementById('calendarGrid');
@@ -1894,7 +2356,7 @@ function initDatabase() {
         grid.innerHTML += `<div class="h-16 rounded-xl bg-slate-900/30"></div>`;
       }
 
-      const todayString = new Date().toISOString().split('T')[0];
+      const todayString = activeDateString();
 
       for (let day = 1; day <= daysInMonth; day++) {
         const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -1925,11 +2387,15 @@ function initDatabase() {
     async function openCalendarDateDetails(dateKey) {
       const diet = await getFromDB('diet_logs', dateKey);
       const workout = await getFromDB('workout_logs', dateKey);
+      const dietDay = readStorageJson(dietDayStorageKey(dateKey));
+      const workoutDay = readStorageJson(workoutDayStorageKey(dateKey));
+      const showDietSnapshot = !diet && dietRecordHasActivity(dietDay);
+      const showWorkoutSnapshot = !workout && workoutDayHasActivity(workoutDay);
 
       document.getElementById('calModalDateTitle').innerText = `Logs for ${dateKey}`;
       const container = document.getElementById('calModalContent');
 
-      if (!diet && !workout) {
+      if (!diet && !workout && !showDietSnapshot && !showWorkoutSnapshot) {
         container.innerHTML = `
           <div class="text-center py-8 text-slate-400">
             <i data-lucide="info" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
@@ -1985,12 +2451,20 @@ function initDatabase() {
           `;
         }
 
+        if (showDietSnapshot) html += dietSnapshotHtml(dietDay);
+        if (showWorkoutSnapshot) html += workoutSnapshotHtml(workoutDay);
+
         container.innerHTML = html;
       }
 
       openModal('calendarDetailsModal');
       lucide.createIcons();
     }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') onMaybeDateChange();
+    });
+    window.addEventListener('focus', onMaybeDateChange);
 
     window.onload = async function() {
       lucide.createIcons();
